@@ -1,0 +1,10 @@
+---
+// Dev-only wrapper: renders GlobalParamPanel only in dev mode.
+// Uses conditional dynamic import in frontmatter so Astro's build
+// never resolves or bundles the component in production.
+const GlobalParamPanel = import.meta.env.DEV
+  ? (await import('../lib/dev/GlobalParamPanel.svelte')).default
+  : null;
+---
+
+{GlobalParamPanel && <GlobalParamPanel client:idle />}

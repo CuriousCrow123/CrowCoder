@@ -57,7 +57,7 @@
     const cx = rect.left + rect.width / 2;
     const cy = rect.top + rect.height / 2;
     const angle = Math.atan2(e.clientY - cy, e.clientX - cx);
-    return ((angle * 180 / Math.PI) + 360) % 360;
+    return ((angle * 180 / Math.PI) + 90 + 360) % 360;
   }
 
   function handlePointerDown(e: PointerEvent) {

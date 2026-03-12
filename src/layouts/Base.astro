@@ -1,11 +1,7 @@
 ---
 import "../styles/global.css";
 import tokens from "../lib/design-tokens.params";
-
-// Dev-only: mount GlobalParamPanel
-const GlobalParamPanel = import.meta.env.DEV
-  ? (await import("../lib/dev/GlobalParamPanel.svelte")).default
-  : null;
+import DevGlobalPanel from "../components/DevGlobalPanel.astro";
 
 // Build design token CSS custom properties from params file (production path)
 const cssVars = tokens
@@ -46,7 +42,7 @@ const {
   </head>
   <body>
     <slot />
-    {GlobalParamPanel && <GlobalParamPanel client:idle />}
+    <DevGlobalPanel />
     <noscript>
       <div style="padding: 2rem; text-align: center; font-family: Georgia, serif;">
         This learning page requires JavaScript for interactive components and quizzes.
