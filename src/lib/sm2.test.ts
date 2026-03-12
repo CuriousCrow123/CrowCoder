@@ -69,13 +69,13 @@ describe("SM-2 algorithm", () => {
         easeFactor: 2.5,
         interval: 6,
       });
-      // 6 * 2.6 = 15.6 → ceil → 16
-      // EF' = 2.5 + (0.1 - 0 * (0.08 + 0 * 0.02)) = 2.6
-      expect(result.interval).toBe(Math.ceil(6 * 2.6));
+      // EF' = 2.5 + (0.1 - 0*(0.08 + 0*0.02)) = 2.6
+      // interval = round(6 * 2.6) = round(15.6) = 16
+      expect(result.interval).toBe(Math.round(6 * 2.6));
       expect(result.repetitions).toBe(3);
     });
 
-    it("rounds up fractional intervals", () => {
+    it("rounds fractional intervals to nearest integer", () => {
       const result = calculateSM2({
         quality: 3,
         repetitions: 2,
@@ -83,8 +83,8 @@ describe("SM-2 algorithm", () => {
         interval: 6,
       });
       // EF' = 2.5 + (0.1 - 2*(0.08 + 2*0.02)) = 2.5 + (0.1 - 0.24) = 2.36
-      // interval = ceil(6 * 2.36) = ceil(14.16) = 15
-      expect(result.interval).toBe(15);
+      // interval = round(6 * 2.36) = round(14.16) = 14
+      expect(result.interval).toBe(14);
     });
   });
 
@@ -122,25 +122,26 @@ describe("SM-2 algorithm", () => {
       expect(result.easeFactor).toBeCloseTo(2.36);
     });
 
-    it("q=0 decreases EF significantly", () => {
+    it("q=0 does not update EF (quality < 3 preserves EF per original spec)", () => {
       const result = calculateSM2({
         quality: 0,
         repetitions: 2,
         easeFactor: 2.5,
         interval: 6,
       });
-      // EF' = 2.5 + (0.1 - 5*(0.08 + 5*0.02)) = 2.5 + (0.1 - 0.9) = 1.7
-      expect(result.easeFactor).toBeCloseTo(1.7);
+      // q < 3: EF is preserved unchanged
+      expect(result.easeFactor).toBe(2.5);
     });
 
-    it("never drops below MIN_EASE_FACTOR (1.3)", () => {
+    it("EF never drops below MIN_EASE_FACTOR (1.3) when q >= 3", () => {
+      // Use q=3 with a low EF to test the clamp
       const result = calculateSM2({
-        quality: 0,
+        quality: 3,
         repetitions: 2,
         easeFactor: 1.3,
         interval: 6,
       });
-      // EF' = 1.3 + (0.1 - 0.9) = 0.5 → clamped to 1.3
+      // EF' = 1.3 + (0.1 - 2*(0.08 + 2*0.02)) = 1.3 + (0.1 - 0.24) = 1.16 → clamped to 1.3
       expect(result.easeFactor).toBe(MIN_EASE_FACTOR);
     });
   });
@@ -157,15 +158,15 @@ describe("SM-2 algorithm", () => {
       expect(result.interval).toBe(1);
     });
 
-    it("preserves updated ease factor on reset", () => {
+    it("preserves ease factor unchanged on reset (per original SM-2 spec)", () => {
       const result = calculateSM2({
         quality: 2,
         repetitions: 5,
         easeFactor: 2.5,
         interval: 30,
       });
-      // EF' = 2.5 + (0.1 - 3*(0.08 + 3*0.02)) = 2.5 + (0.1 - 0.42) = 2.18
-      expect(result.easeFactor).toBeCloseTo(2.18);
+      // q < 3: EF is NOT updated, preserved as-is
+      expect(result.easeFactor).toBe(2.5);
     });
   });
 
@@ -186,13 +187,13 @@ describe("SM-2 algorithm", () => {
       expect(result.repetitions).toBe(2);
       card = result;
 
-      // Review 3: interval → ceil(6 * 2.5) = 15
+      // Review 3: interval → round(6 * 2.5) = 15
       result = calculateSM2({ quality, ...card });
       expect(result.interval).toBe(15);
       expect(result.repetitions).toBe(3);
       card = result;
 
-      // Review 4: interval → ceil(15 * 2.5) = 38
+      // Review 4: interval → round(15 * 2.5) = 38 (37.5 rounds to 38)
       result = calculateSM2({ quality, ...card });
       expect(result.interval).toBe(38);
       expect(result.repetitions).toBe(4);
@@ -201,18 +202,20 @@ describe("SM-2 algorithm", () => {
     it("simulates failing then recovering", () => {
       let card = createNewCard();
 
-      // Pass twice
-      card = calculateSM2({ quality: 5, ...card });
-      card = calculateSM2({ quality: 5, ...card });
+      // Pass twice with q=5
+      card = calculateSM2({ quality: 5, ...card }); // EF: 2.5 → 2.6
+      card = calculateSM2({ quality: 5, ...card }); // EF: 2.6 → 2.7
       expect(card.repetitions).toBe(2);
       expect(card.interval).toBe(6);
+      expect(card.easeFactor).toBeCloseTo(2.7);
 
-      // Fail — resets to beginning
+      // Fail — resets repetitions and interval, preserves EF unchanged
       card = calculateSM2({ quality: 1, ...card });
       expect(card.repetitions).toBe(0);
       expect(card.interval).toBe(1);
+      expect(card.easeFactor).toBeCloseTo(2.7); // EF preserved
 
-      // Recover
+      // Recover — EF is still high, so intervals grow faster
       card = calculateSM2({ quality: 5, ...card });
       expect(card.repetitions).toBe(1);
       expect(card.interval).toBe(1);

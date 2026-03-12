@@ -44,30 +44,29 @@ export interface SM2Output {
  *   I(2) = 6 days
  *   I(n) = I(n-1) × EF   (for n > 2)
  *
- * Ease factor update:
+ * Ease factor update (only when q >= 3):
  *   EF' = EF + (0.1 - (5 - q) × (0.08 + (5 - q) × 0.02))
  *   EF' is clamped to a minimum of 1.3
  *
  * Quality < 3 resets the repetition count and interval
- * but preserves the (updated) ease factor.
+ * but preserves the ease factor unchanged (per original spec).
  */
 export function calculateSM2(input: SM2Input): SM2Output {
   const { quality, repetitions, easeFactor, interval } = input;
 
-  // Update ease factor using SM-2 formula
-  const delta = 0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02);
-  const newEaseFactor = Math.max(MIN_EASE_FACTOR, easeFactor + delta);
-
-  // Quality < 3: incorrect — restart from beginning, keep updated ease factor
+  // Quality < 3: incorrect — restart schedule, preserve ease factor unchanged
   if (quality < 3) {
     return {
       repetitions: 0,
-      easeFactor: newEaseFactor,
+      easeFactor,
       interval: 1,
     };
   }
 
-  // Quality >= 3: correct — advance schedule
+  // Quality >= 3: correct — update ease factor and advance schedule
+  const delta = 0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02);
+  const newEaseFactor = Math.max(MIN_EASE_FACTOR, easeFactor + delta);
+
   let newInterval: number;
   const newRepetitions = repetitions + 1;
 
@@ -78,8 +77,8 @@ export function calculateSM2(input: SM2Input): SM2Output {
     // Second successful review: 6 days
     newInterval = 6;
   } else {
-    // Subsequent reviews: previous interval × ease factor, rounded up
-    newInterval = Math.ceil(interval * newEaseFactor);
+    // Subsequent reviews: previous interval × ease factor, rounded to nearest integer
+    newInterval = Math.round(interval * newEaseFactor);
   }
 
   return {
