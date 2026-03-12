@@ -3,11 +3,26 @@ import Base from "../layouts/Base.astro";
 import ProseHighlight from "../components/ProseHighlight.svelte";
 import ProseReactive from "../components/ProseReactive.svelte";
 import ColorPicker from "../components/ColorPicker.svelte";
+import Popup from "../components/Popup.svelte";
+import Quiz from "../components/Quiz.svelte";
+import Hint from "../components/Hint.svelte";
+import ProgressBar from "../components/ProgressBar.svelte";
+import ExportImport from "../components/ExportImport.svelte";
+
+const quizIds = [
+  "color-primary",
+  "color-secondary",
+  "color-complementary",
+  "color-warm-cool",
+];
 ---
 
 <Base title="Color Theory — CrowCoder">
   <main class="prose-column" style="padding-block: 3rem;">
     <h1>Understanding Color Theory</h1>
+
+    <ProgressBar client:load quizIds={quizIds} />
+
     <p>
       Color theory is the foundation of visual design. It explains how colors
       interact, how they can be combined harmoniously, and how they affect
@@ -21,6 +36,17 @@ import ColorPicker from "../components/ColorPicker.svelte";
       These colors cannot be created by mixing other colors together — they are
       the building blocks from which all other colors are derived.
     </p>
+
+    <div id="quiz-color-primary">
+      <Popup client:visible id="color-primary" trigger="scroll" mode="inline">
+        <Quiz
+          id="color-primary"
+          question="Which of these is NOT a primary color in the traditional color model?"
+          answers={["Red", "Green", "Blue", "Yellow"]}
+          correctIndex={1}
+        />
+      </Popup>
+    </div>
 
     <h2>The Color Wheel</h2>
     <p>
@@ -42,6 +68,17 @@ import ColorPicker from "../components/ColorPicker.svelte";
       </ProseReactive>
     </p>
 
+    <div id="quiz-color-secondary">
+      <Popup client:visible id="color-secondary" trigger="scroll" mode="inline">
+        <Quiz
+          id="color-secondary"
+          question="What do you get when you mix red and yellow?"
+          answers={["Green", "Purple", "Orange", "Brown"]}
+          correctIndex={2}
+        />
+      </Popup>
+    </div>
+
     <h2>Color Harmony</h2>
     <p>
       Colors that look good together follow predictable patterns on the
@@ -53,6 +90,27 @@ import ColorPicker from "../components/ColorPicker.svelte";
       on the wheel.
     </p>
 
+    <Popup client:visible id="color-complementary-hint" trigger="manual" mode="inline">
+      <Hint title="Did you know?">
+        <p>
+          Complementary color pairs create maximum contrast. That's why
+          sports teams often use them — the colors pop against each other
+          and are easy to distinguish from a distance.
+        </p>
+      </Hint>
+    </Popup>
+
+    <div id="quiz-color-complementary">
+      <Popup client:visible id="color-complementary" trigger="scroll" mode="inline">
+        <Quiz
+          id="color-complementary"
+          question="What is the complementary color of blue?"
+          answers={["Red", "Green", "Orange", "Yellow"]}
+          correctIndex={2}
+        />
+      </Popup>
+    </div>
+
     <h2>Warm vs. Cool Colors</h2>
     <p>
       The color wheel splits into warm colors (reds, oranges, yellows) and
@@ -61,6 +119,17 @@ import ColorPicker from "../components/ColorPicker.svelte";
       this distinction is key to creating mood and depth in design.
     </p>
 
+    <div id="quiz-color-warm-cool">
+      <Popup client:visible id="color-warm-cool" trigger="scroll" mode="inline">
+        <Quiz
+          id="color-warm-cool"
+          question="Which color is considered a 'warm' color?"
+          answers={["Blue", "Purple", "Green", "Orange"]}
+          correctIndex={3}
+        />
+      </Popup>
+    </div>
+
     <p>
       Try clicking the
       <ProseHighlight client:load id="color-main">highlighted text</ProseHighlight>
@@ -68,5 +137,10 @@ import ColorPicker from "../components/ColorPicker.svelte";
       bidirectionally — the text highlights the component, and interacting
       with the component highlights related text.
     </p>
+
+    <h2>Your Progress</h2>
+    <div class="component-breakout">
+      <ExportImport client:idle />
+    </div>
   </main>
 </Base>

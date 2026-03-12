@@ -162,7 +162,7 @@
   >
     {#if trigger === 'manual' && !isActive}
       <button class="popup-trigger-btn" onclick={handleManualTrigger}>
-        <slot name="trigger-label">Show hint</slot>
+        Show hint
       </button>
     {/if}
 
