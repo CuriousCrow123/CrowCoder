@@ -999,7 +999,7 @@ Self-hosted WOFF2 via Fontsource. `font-display: swap` for all three fonts *(cor
 - [x] **Validate tuning system:** sliders update component visuals in real-time, commit writes back to `.params.ts`, Vite HMR reloads
 - [x] Create color theory sample lesson demonstrating both interaction patterns
 - [x] Configure GitHub Pages deployment (`.github/workflows/deploy.yml`, SHA-pinned actions)
-- [ ] Push to remote (`git remote add origin https://github.com/CuriousCrow123/CrowCoder.git && git push -u origin main`)
+- [x] Push to remote (`git remote add origin https://github.com/CuriousCrow123/CrowCoder.git && git push -u origin main`)
 - [ ] Configure GitHub Pages (Settings → Pages → Source: GitHub Actions)
 - [x] Populate `CLAUDE.md` with project conventions and security rules
 - [x] Create ADR: `docs/decisions/001-cross-island-state-sharing.md`
