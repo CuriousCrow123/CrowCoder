@@ -1,11 +1,21 @@
 # CrowCoder — Project Conventions
 
+Interactive learning site for programming concepts, built with Astro + Svelte islands.
+
 ## Stack
 
 - **Astro 6** (static output) + **Svelte 5** (runes, islands) + **Tailwind CSS v4** (Vite plugin)
 - **Zod v4** for runtime validation
 - **Vitest** for testing
 - **GitHub Pages** deployment via GitHub Actions
+
+## Commands
+
+- `npm run dev` — local dev server
+- `npm run build` — production build (Astro static output)
+- `npm test` — run tests (Vitest)
+- `npm run preview` — preview production build locally
+- `npx astro check` — type checking
 
 ## Architecture
 
@@ -33,7 +43,7 @@ See ADR: `docs/decisions/001-cross-island-state-sharing.md`
 
 - Each tunable component has a colocated `.params.ts` sidecar file
 - `<Tunable>` wrapper component for dev-mode gear icon + floating panel
-- ALL tuning code MUST be gated behind `import.meta.env.DEV`
+- All tuning code must be gated behind `import.meta.env.DEV`
 - CSS params (tier: 'css') update instantly via reactive overrides
 - JS behavioral params (tier: 'js') update via commit-to-disk → Vite HMR cycle
 - Production builds must contain zero trace of: `Tunable`, `ParamPanel`, `ParamInput`, `GlobalParamPanel`, `__params`
@@ -41,9 +51,10 @@ See ADR: `docs/decisions/001-cross-island-state-sharing.md`
 
 ### Components
 
-- Component slot content: accept `children` prop (Astro slot mapping) and alias to `slotContent` internally to avoid collision with Tunable's `{#snippet children(overrides)}`
+- Astro maps slot content to a `children` prop — accept it in Svelte component props
+- Alias `children` to `slotContent` internally to avoid collision with Tunable's `{#snippet children(overrides)}`
 - Dev imports use `tunablePromise` from `lib/dev/lazy.ts` (resolved via `onMount`) — Svelte 5 disallows top-level `await`
-- Use `{#if}` branching for small variant counts, not dynamic components
+- Use `{#if}` branching for 3 or fewer variants, not dynamic components
 - Hydration directives: `client:load` for above-fold, `client:visible` for below-fold, `client:idle` for low-priority
 
 ### Security Rules
@@ -78,9 +89,9 @@ src/
     dev/                # Dev-only tuning system (import.meta.env.DEV gated; param-types.ts also used in production)
       lazy.ts           # Shared async Tunable loader (avoids top-level await)
     types.ts            # Shared types
-    sm2.ts              # SM-2 algorithm (Phase 2)
-    persistence.ts      # localStorage handling (Phase 2)
-    scroll-observer.ts  # Shared IntersectionObserver (Phase 2)
+    sm2.ts              # SM-2 algorithm (Phase 2 — not yet created)
+    persistence.ts      # localStorage handling (Phase 2 — not yet created)
+    scroll-observer.ts  # Shared IntersectionObserver (Phase 2 — not yet created)
     design-tokens.params.ts  # Site-wide tunable values
   styles/global.css
   integrations/params-writer.ts
