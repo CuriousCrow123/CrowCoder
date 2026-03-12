@@ -38,7 +38,7 @@ This is a greenfield project. No code, dependencies, or git history exist yet.
 ### Key Improvements Discovered
 
 7. **~~Extract `createParamAccessor` factory~~ RESOLVED** — Extracted to `param-types.ts` with type-safe overloads.
-8. **Zod schemas and TypeScript interfaces are dual-maintained** — Use `z.infer<typeof Schema>` for `CardData` and `ProgressData` as single source of truth.
+8. **~~Zod schemas and TypeScript interfaces are dual-maintained~~ RESOLVED** — Added compile-time type assertions in `params-writer.ts` ensuring Zod schema stays in sync with `ParamDef`.
 9. **~~`ISODateString` brand has no parse path~~ RESOLVED** — Added `parseISODateString()` to `types.ts`.
 10. **~~Design tokens have no production path~~ RESOLVED** — `Base.astro` renders `:root` CSS declarations from `design-tokens.params.ts` at build time via `set:html`.
 11. **~~Integration test belongs in Phase 1, not Phase 3~~ RESOLVED** — Moved to Phase 1 checklist.
@@ -46,7 +46,7 @@ This is a greenfield project. No code, dependencies, or git history exist yet.
 13. **IntersectionObserver grace period not implemented** — The `scroll-observer.ts` code fires immediately; the 1-second grace period mentioned in the spec is not in the code.
 14. **Define composite `PopupState` type** — Combine `current`, `phase`, and `queue` into a single interface with explicit invariants.
 15. **Quiz wiring layer undefined** — Specify that Quiz's `onresult` callback is connected to the progress store at the page level, not inside Popup.
-16. **Below-fold ProseHighlight/ProseReactive should use `client:visible`** — Only above-fold instances need `client:load`.
+16. **~~Below-fold ProseHighlight/ProseReactive should use `client:visible`~~ REVISED** — All interactive `ProseHighlight` instances now use `client:load` to avoid non-functional buttons before hydration (review finding P3 #12).
 
 ### New Considerations
 
@@ -1005,6 +1005,7 @@ Self-hosted WOFF2 via Fontsource. `font-display: swap` for all three fonts *(cor
 - [x] Create ADR: `docs/decisions/001-cross-island-state-sharing.md`
 - [x] **Verify production build** has zero trace of dev tooling (`grep -r` against `dist/`) — CI must fail on match
 - [x] **Integration test: cross-island state sharing** — verify reactive propagation (not just object identity) across `client:load` and `client:visible` islands
+- [x] **Code review fixes (P1/P2/P3)** — 16 findings addressed: leaked promises fixed with `$effect`+cancellation, Tunable prop mutation fixed via `structuredClone`, `site`/`base` config added, rAF throttle on drag, `setTimeout` cleanup, type safety (`TunableType` replaces `any`), keyboard a11y (Home/End/PageUp/PageDown), focus ring fix, Zod/TS sync assertion, snippet extraction (DRY), `client:load` for interactive elements, `aria-hidden` on decorative SVGs, `0.01ms` reduced-motion pattern, YAGNI types removed
 
 **Success criteria:** Two+ Astro islands sharing reactive state across mixed hydration directives. Color theory lesson with bidirectional prose-component interaction. Per-component tuning panels working (real-time CSS feedback + commit to disk). Global design tokens panel functional. Self-hosted fonts rendering. Deployed to GitHub Pages. Zero dev tooling in production build.
 
