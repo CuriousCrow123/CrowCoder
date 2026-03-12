@@ -1031,34 +1031,34 @@ Self-hosted WOFF2 via Fontsource. `font-display: swap` for all three fonts *(cor
 **Goal:** Build the complete quiz → SM-2 → localStorage pipeline in one phase.
 
 **Tasks:**
-- [ ] Build `Popup.svelte` + `Popup.params.ts` (trigger logic, all three modes, state machine)
-- [ ] Build `Quiz.svelte` + `Quiz.params.ts` (pure content: question, answers, feedback)
-- [ ] Build `Hint.svelte` (non-quiz popup content; evaluate if it needs `.params.ts`)
-- [ ] Build `scroll-observer.ts` (single shared IntersectionObserver, one-shot)
-- [ ] Implement scroll trigger in Popup (uses scroll-observer, 1-second grace period)
-- [ ] Implement manual trigger in Popup (button click)
-- [ ] Implement component-complete trigger in Popup (watches store via $derived)
-- [ ] Build popup state machine in `popup.svelte.ts`
-- [ ] Add trigger deduplication (module-level Set)
-- [ ] Add max queue depth (3-5) with "dismiss all" escape
-- [ ] Implement `mode="inline"` — expand in-place
-- [ ] Implement `mode="modal"` — native `<dialog>` + `showModal()`
-- [ ] Implement `mode="slide-in"` — side panel, non-blocking
-- [ ] Handle `prefers-reduced-motion` — bypass animation states
-- [ ] Add keyboard navigation (Tab, Enter, Escape)
-- [ ] Implement SM-2 algorithm in `src/lib/sm2.ts`
-- [ ] Build `progress.svelte.ts` (load from localStorage at module top-level)
-- [ ] Build `persistence.ts` (Zod validation, debounced auto-save, import atomicity)
-- [ ] Add `beforeunload` flush handler for pending auto-save writes
-- [ ] Ensure import clears pending `saveTimeout` before setting `importInProgress`
-- [ ] Wire quiz results → scoring policy → SM-2 → progressState
-- [ ] Handle localStorage unavailability (in-memory fallback + warning)
-- [ ] Build inline review: due quizzes re-appear at original location, capped at 5-7
-- [ ] Build `ProgressBar.svelte` + `ProgressBar.params.ts` (segmented, color-coded, clickable)
-- [ ] Build `ExportImport.svelte` (download JSON / upload + validate + replace)
-- [ ] Add quiz and review components to the sample lesson
-- [ ] Unit tests for `sm2.ts`
-- [ ] Unit tests for `persistence.ts` (Zod validation, schema migration)
+- [x] Build `Popup.svelte` + `Popup.params.ts` (trigger logic, all three modes, state machine)
+- [x] Build `Quiz.svelte` + `Quiz.params.ts` (pure content: question, answers, feedback)
+- [x] Build `Hint.svelte` (non-quiz popup content; evaluate if it needs `.params.ts`) — No `.params.ts` needed; purely structural
+- [x] Build `scroll-observer.ts` (single shared IntersectionObserver, one-shot)
+- [x] Implement scroll trigger in Popup (uses scroll-observer, 1-second grace period)
+- [x] Implement manual trigger in Popup (button click)
+- [x] Implement component-complete trigger in Popup (watches store via $derived)
+- [x] Build popup state machine in `popup.svelte.ts`
+- [x] Add trigger deduplication (module-level Set)
+- [x] Add max queue depth (3-5) with "dismiss all" escape
+- [x] Implement `mode="inline"` — expand in-place
+- [x] Implement `mode="modal"` — native `<dialog>` + `showModal()`
+- [x] Implement `mode="slide-in"` — side panel, non-blocking
+- [x] Handle `prefers-reduced-motion` — bypass animation states
+- [x] Add keyboard navigation (Tab, Enter, Escape)
+- [x] Implement SM-2 algorithm in `src/lib/sm2.ts`
+- [x] Build `progress.svelte.ts` (load from localStorage at module top-level)
+- [x] Build `persistence.ts` (Zod validation, debounced auto-save, import atomicity)
+- [x] Add `beforeunload` flush handler for pending auto-save writes
+- [x] Ensure import clears pending `saveTimeout` before setting `importInProgress`
+- [x] Wire quiz results → scoring policy → SM-2 → progressState
+- [x] Handle localStorage unavailability (in-memory fallback + warning)
+- [x] Build inline review: due quizzes re-appear at original location, capped at 5-7
+- [x] Build `ProgressBar.svelte` + `ProgressBar.params.ts` (segmented, color-coded, clickable)
+- [x] Build `ExportImport.svelte` (download JSON / upload + validate + replace)
+- [x] Add quiz and review components to the sample lesson
+- [x] Unit tests for `sm2.ts`
+- [x] Unit tests for `persistence.ts` (Zod validation, schema migration)
 
 **Success criteria:** Student answers quizzes in all three popup modes, SM-2 schedules reviews, due quizzes re-appear inline on next visit, progress persists across reloads, export/import works, popup state machine handles transitions cleanly.
 
