@@ -1,0 +1,72 @@
+---
+import Base from "../layouts/Base.astro";
+import ProseHighlight from "../components/ProseHighlight.svelte";
+import ProseReactive from "../components/ProseReactive.svelte";
+import ColorPicker from "../components/ColorPicker.svelte";
+---
+
+<Base title="Color Theory — CrowCoder">
+  <main class="prose-column" style="padding-block: 3rem;">
+    <h1>Understanding Color Theory</h1>
+    <p>
+      Color theory is the foundation of visual design. It explains how colors
+      interact, how they can be combined harmoniously, and how they affect
+      human perception and emotion.
+    </p>
+
+    <h2>Primary Colors</h2>
+    <p>
+      In the traditional color model, the three primary colors are
+      <strong>red</strong>, <strong>yellow</strong>, and <strong>blue</strong>.
+      These colors cannot be created by mixing other colors together — they are
+      the building blocks from which all other colors are derived.
+    </p>
+
+    <h2>The Color Wheel</h2>
+    <p>
+      The color wheel arranges colors in a circle, showing relationships
+      between primary, secondary, and tertiary colors. Try
+      <ProseHighlight client:load id="color-main">selecting a color on the wheel below</ProseHighlight>
+      to explore how hues relate to each other. Secondary colors
+      (orange, green, purple) are made by mixing two primaries.
+    </p>
+
+    <div class="component-breakout interactive-section">
+      <ColorPicker client:load id="main" />
+    </div>
+
+    <p>
+      <ProseReactive client:load>
+        You're currently exploring the color wheel. Drag the handle to
+        discover different hues and see how they relate to the prose above.
+      </ProseReactive>
+    </p>
+
+    <h2>Color Harmony</h2>
+    <p>
+      Colors that look good together follow predictable patterns on the
+      color wheel.
+      <ProseHighlight client:visible id="color-main">Complementary colors</ProseHighlight>
+      sit opposite each other (like blue and orange).
+      <strong>Analogous</strong> colors are neighbors (like blue, blue-green,
+      and green). <strong>Triadic</strong> colors form an equilateral triangle
+      on the wheel.
+    </p>
+
+    <h2>Warm vs. Cool Colors</h2>
+    <p>
+      The color wheel splits into warm colors (reds, oranges, yellows) and
+      cool colors (blues, greens, purples). Warm colors advance visually
+      and feel energetic. Cool colors recede and feel calming. Understanding
+      this distinction is key to creating mood and depth in design.
+    </p>
+
+    <p>
+      Try clicking the
+      <ProseHighlight client:visible id="color-main">highlighted text</ProseHighlight>
+      throughout this page to see how prose and components communicate
+      bidirectionally — the text highlights the component, and interacting
+      with the component highlights related text.
+    </p>
+  </main>
+</Base>

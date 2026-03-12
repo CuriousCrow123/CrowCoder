@@ -1,0 +1,137 @@
+@import "tailwindcss";
+
+/* Fontsource — self-hosted WOFF2 */
+@import "@fontsource-variable/literata";
+@import "@fontsource-variable/dm-sans";
+@import "@fontsource/jetbrains-mono";
+
+/*
+ * Typography scale: Major Third (1.250), 19px base
+ * Literata = body prose, DM Sans = UI, JetBrains Mono = code
+ */
+
+/* Fallback font-face descriptors for CLS mitigation */
+@font-face {
+  font-family: "Literata Fallback";
+  src: local("Georgia");
+  size-adjust: 97%;
+  ascent-override: 100%;
+  descent-override: 25%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "DM Sans Fallback";
+  src: local("Arial");
+  size-adjust: 100%;
+  ascent-override: 100%;
+  descent-override: 25%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "JetBrains Mono Fallback";
+  src: local("Courier New");
+  size-adjust: 110%;
+  ascent-override: 100%;
+  descent-override: 25%;
+  line-gap-override: 0%;
+}
+
+@theme {
+  --font-prose: "Literata Variable", "Literata Fallback", Georgia, serif;
+  --font-ui: "DM Sans Variable", "DM Sans Fallback", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", "JetBrains Mono Fallback", "Courier New", monospace;
+}
+
+:root {
+  /* Design tokens — overridden by GlobalParamPanel in dev, rendered from design-tokens.params.ts in prod */
+  --prose-max-width: 680px;
+  --component-breakout-width: 960px;
+  --paragraph-spacing: 1.5rem;
+  --component-spacing: 4rem;
+  --accent-color: #6366f1;
+  --background-color: #faf8f5;
+
+  /* Typography scale */
+  --text-base: 19px;
+  --text-sm: 15px;
+  --text-h4: 19px;
+  --text-h3: 24px;
+  --text-h2: 30px;
+  --text-h1: 37px;
+  --text-quiz-question: 17px;
+  --text-quiz-answer: 16px;
+  --text-progress: 14px;
+}
+
+html {
+  font-size: var(--text-base);
+  background-color: var(--background-color);
+  color: #1a1a1a;
+}
+
+body {
+  font-family: var(--font-prose);
+  line-height: 1.65;
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Prose column */
+.prose-column {
+  max-width: var(--prose-max-width);
+  margin-inline: auto;
+  padding-inline: 1.5rem;
+}
+
+/* Component breakout */
+.component-breakout {
+  max-width: var(--component-breakout-width);
+  margin-inline: auto;
+  padding-inline: 1.5rem;
+}
+
+/* Typography */
+h1, h2, h3, h4 {
+  font-family: var(--font-prose);
+  margin-block-start: 2rem;
+  margin-block-end: 0.75rem;
+}
+
+h1 { font-size: var(--text-h1); font-weight: 700; line-height: 1.2; }
+h2 { font-size: var(--text-h2); font-weight: 700; line-height: 1.25; }
+h3 { font-size: var(--text-h3); font-weight: 600; line-height: 1.35; }
+h4 { font-size: var(--text-h4); font-weight: 600; line-height: 1.4; }
+
+p {
+  margin-block-end: var(--paragraph-spacing);
+}
+
+code, pre {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+}
+
+/* UI text */
+.ui-text {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
+/* Vertical rhythm around interactive components */
+.interactive-section {
+  margin-block: var(--component-spacing);
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
