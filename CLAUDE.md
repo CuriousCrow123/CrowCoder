@@ -43,6 +43,7 @@ See ADR: `docs/decisions/001-cross-island-state-sharing.md`
 
 - Each tunable component has a colocated `.params.ts` sidecar file
 - `<Tunable>` wrapper component for dev-mode gear icon + floating panel
+- `<Tunable>` wrapper uses `display: inline` — components used inline in prose require this; block-level components work without change
 - All tuning code must be gated behind `import.meta.env.DEV`
 - CSS params (tier: 'css') update instantly via reactive overrides
 - JS behavioral params (tier: 'js') update via commit-to-disk → Vite HMR cycle
@@ -56,6 +57,8 @@ See ADR: `docs/decisions/001-cross-island-state-sharing.md`
 - Dev imports use `tunablePromise` from `lib/dev/lazy.ts` (resolved via `onMount`) — Svelte 5 disallows top-level `await`
 - Use `{#if}` branching for 3 or fewer variants, not dynamic components
 - Hydration directives: `client:load` for above-fold, `client:visible` for below-fold, `client:idle` for low-priority
+- Astro hydrated components require **static imports** — never use dynamic `await import()` for components that need `client:*` directives (Astro's renderer can't resolve them); for conditional rendering, use a thin `.astro` wrapper with a static import + `import.meta.env.DEV` gate
+- `<astro-island>` defaults to `display: block` — global CSS includes `p > astro-island { display: inline }` to keep inline islands flowing within prose
 
 ### Security Rules
 

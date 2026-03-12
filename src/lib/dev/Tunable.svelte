@@ -51,6 +51,7 @@
 <style>
   .tunable-wrapper {
     position: relative;
+    display: inline;
   }
 
   .tunable-gear {
