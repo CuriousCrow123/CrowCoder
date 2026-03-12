@@ -1,14 +1,15 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
-  import { onMount } from 'svelte';
   import params from './ProseHighlight.params';
   import { createParamAccessor } from '../lib/dev/param-types';
   import { lessonState, setHighlight } from '../lib/state/lesson.svelte';
-  import { tunablePromise } from '../lib/dev/lazy';
+  import { tunablePromise, type TunableType } from '../lib/dev/lazy';
 
-  let TunableComponent = $state<any>(null);
-  onMount(() => {
-    tunablePromise?.then((c) => { TunableComponent = c; });
+  let TunableComponent = $state<TunableType | null>(null);
+  $effect(() => {
+    let cancelled = false;
+    tunablePromise?.then((c) => { if (!cancelled) TunableComponent = c; });
+    return () => { cancelled = true; };
   });
 
   let { children: slotContent, id }: {
@@ -33,27 +34,7 @@
   }
 </script>
 
-{#if TunableComponent}
-  <TunableComponent {params} filePath="./src/components/ProseHighlight.params.ts">
-    {#snippet children(overrides)}
-      <span
-        class="prose-highlight"
-        class:active={isActive}
-        role="button"
-        tabindex="0"
-        aria-pressed={isActive}
-        onclick={handleClick}
-        onkeydown={handleKeydown}
-        style:--underline-thickness="{p('underlineThickness', 'number', overrides)}px"
-        style:--pulse-color={p('pulseColor', 'color', overrides)}
-        style:--pulse-duration="{p('pulseDuration', 'number', overrides)}ms"
-        style:--active-bg={p('activeBackground', 'color', overrides)}
-      >
-        {@render slotContent()}
-      </span>
-    {/snippet}
-  </TunableComponent>
-{:else}
+{#snippet highlight(overrides?: Record<string, number | string | boolean>)}
   <span
     class="prose-highlight"
     class:active={isActive}
@@ -62,13 +43,23 @@
     aria-pressed={isActive}
     onclick={handleClick}
     onkeydown={handleKeydown}
-    style:--underline-thickness="{p('underlineThickness', 'number')}px"
-    style:--pulse-color={p('pulseColor', 'color')}
-    style:--pulse-duration="{p('pulseDuration', 'number')}ms"
-    style:--active-bg={p('activeBackground', 'color')}
+    style:--underline-thickness="{p('underlineThickness', 'number', overrides)}px"
+    style:--pulse-color={p('pulseColor', 'color', overrides)}
+    style:--pulse-duration="{p('pulseDuration', 'number', overrides)}ms"
+    style:--active-bg={p('activeBackground', 'color', overrides)}
   >
     {@render slotContent()}
   </span>
+{/snippet}
+
+{#if TunableComponent}
+  <TunableComponent {params} filePath="./src/components/ProseHighlight.params.ts">
+    {#snippet children(overrides)}
+      {@render highlight(overrides)}
+    {/snippet}
+  </TunableComponent>
+{:else}
+  {@render highlight()}
 {/if}
 
 <style>
@@ -107,10 +98,10 @@
 
   @media (prefers-reduced-motion: reduce) {
     .prose-highlight {
-      transition: none;
+      transition-duration: 0.01ms !important;
     }
     .prose-highlight.active {
-      animation: none;
+      animation-duration: 0.01ms !important;
     }
   }
 </style>

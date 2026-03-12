@@ -1,13 +1,14 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
   import params from './ColorPicker.params';
   import { createParamAccessor } from '../lib/dev/param-types';
   import { lessonState, setComponentValue, setHighlight } from '../lib/state/lesson.svelte';
-  import { tunablePromise } from '../lib/dev/lazy';
+  import { tunablePromise, type TunableType } from '../lib/dev/lazy';
 
-  let TunableComponent = $state<any>(null);
-  onMount(() => {
-    tunablePromise?.then((c) => { TunableComponent = c; });
+  let TunableComponent = $state<TunableType | null>(null);
+  $effect(() => {
+    let cancelled = false;
+    tunablePromise?.then((c) => { if (!cancelled) TunableComponent = c; });
+    return () => { cancelled = true; };
   });
 
   let { id = 'main' }: { id?: string } = $props();
@@ -38,9 +39,17 @@
   // Read active highlight to know if this component is being referenced
   let isHighlighted = $derived(lessonState.activeHighlight === `color-${id}`);
 
-  // Update shared state when hue changes
+  // Update shared state when hue changes, throttled to 1 frame during drag
   $effect(() => {
-    setComponentValue('colorPicker', id, { hue, name: getColorName(hue) });
+    const h = hue;
+    const dragging = isDragging;
+    if (dragging) {
+      const raf = requestAnimationFrame(() => {
+        setComponentValue('colorPicker', id, { hue: h, name: getColorName(h) });
+      });
+      return () => cancelAnimationFrame(raf);
+    }
+    setComponentValue('colorPicker', id, { hue: h, name: getColorName(h) });
   });
 
   function hueFromEvent(e: MouseEvent | PointerEvent, svg: SVGSVGElement) {
@@ -114,13 +123,24 @@
       onpointerup={handlePointerUp}
       onclick={handleInteraction}
       onkeydown={(e) => {
+        let handled = true;
         if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
-          e.preventDefault();
           hue = (hue + 5) % 360;
-          handleInteraction();
         } else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
-          e.preventDefault();
           hue = (hue - 5 + 360) % 360;
+        } else if (e.key === 'PageUp') {
+          hue = (hue + 30) % 360;
+        } else if (e.key === 'PageDown') {
+          hue = (hue - 30 + 360) % 360;
+        } else if (e.key === 'Home') {
+          hue = 0;
+        } else if (e.key === 'End') {
+          hue = 359;
+        } else {
+          handled = false;
+        }
+        if (handled) {
+          e.preventDefault();
           handleInteraction();
         }
       }}
@@ -173,6 +193,7 @@
       <div
         class="color-swatch"
         style:background-color="hsl({hue}, 80%, 55%)"
+        aria-hidden="true"
       ></div>
       <div class="color-details">
         <span class="color-name">{getColorName(hue)}</span>
@@ -212,6 +233,9 @@
   svg {
     cursor: crosshair;
     touch-action: none;
+  }
+
+  svg:focus:not(:focus-visible) {
     outline: none;
   }
 
@@ -254,7 +278,7 @@
 
   @media (prefers-reduced-motion: reduce) {
     .color-picker {
-      transition: none;
+      transition-duration: 0.01ms !important;
     }
   }
 </style>

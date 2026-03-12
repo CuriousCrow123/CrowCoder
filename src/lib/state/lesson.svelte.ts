@@ -24,7 +24,8 @@ export function getComponentValue<K extends keyof ComponentValueRegistry>(
   type: K,
   id: string,
 ): ComponentValueRegistry[K] | undefined {
-  return lessonState.componentValues[`${type}:${id}`] as
+  const key = `${type}:${id}` as ComponentKey;
+  return lessonState.componentValues[key] as
     | ComponentValueRegistry[K]
     | undefined;
 }
@@ -35,7 +36,8 @@ export function setComponentValue<K extends keyof ComponentValueRegistry>(
   id: string,
   value: ComponentValueRegistry[K],
 ): void {
-  lessonState.componentValues[`${type}:${id}`] = value;
+  const key = `${type}:${id}` as ComponentKey;
+  (lessonState.componentValues as Record<ComponentKey, ComponentValueRegistry[K]>)[key] = value;
 }
 
 /** Set or clear the active highlight */

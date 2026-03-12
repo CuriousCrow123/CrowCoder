@@ -59,9 +59,9 @@ describe("lesson state singleton", () => {
     });
 
     it("getComponentValue retrieves typed values", () => {
-      setComponentValue("slider", "volume", { current: 75 });
-      const value = getComponentValue("slider", "volume");
-      expect(value).toEqual({ current: 75 });
+      setComponentValue("colorPicker", "volume", { hue: 75, name: "Spring Green" });
+      const value = getComponentValue("colorPicker", "volume");
+      expect(value).toEqual({ hue: 75, name: "Spring Green" });
     });
 
     it("getComponentValue returns undefined for missing keys", () => {
@@ -72,7 +72,6 @@ describe("lesson state singleton", () => {
     it("multiple components coexist without interference", () => {
       setComponentValue("colorPicker", "a", { hue: 0, name: "Red" });
       setComponentValue("colorPicker", "b", { hue: 120, name: "Green" });
-      setComponentValue("slider", "x", { current: 50 });
 
       expect(getComponentValue("colorPicker", "a")).toEqual({
         hue: 0,
@@ -82,7 +81,6 @@ describe("lesson state singleton", () => {
         hue: 120,
         name: "Green",
       });
-      expect(getComponentValue("slider", "x")).toEqual({ current: 50 });
     });
 
     it("overwriting a component value replaces it entirely", () => {

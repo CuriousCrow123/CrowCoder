@@ -3,19 +3,21 @@
   import type { ParamDef } from './param-types';
   import ParamPanel from './ParamPanel.svelte';
 
-  let { children, params, filePath }: {
+  let { children, params: rawParams, filePath }: {
     children: Snippet<[Record<string, number | string | boolean>]>;
     params: ParamDef[];
     filePath: string;
   } = $props();
 
+  // Clone to avoid mutating the caller's param definitions
+  let localParams = $state<ParamDef[]>(structuredClone(rawParams));
   let showPanel = $state(false);
   let overrides = $state<Record<string, number | string | boolean>>({});
 
   function handleChange(key: string, value: number | string | boolean) {
     overrides[key] = value;
-    // Also update the params array so ParamPanel shows current values
-    const param = params.find(p => p.key === key);
+    // Update local copy so ParamPanel shows current values
+    const param = localParams.find(p => p.key === key);
     if (param) {
       (param as { value: typeof value }).value = value;
     }
@@ -31,7 +33,7 @@
     aria-label="Toggle parameter panel"
     aria-expanded={showPanel}
   >
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
       <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0"/>
       <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52zM8 10.93a2.929 2.929 0 1 1 0-5.858 2.929 2.929 0 0 1 0 5.858"/>
     </svg>
@@ -39,7 +41,7 @@
 
   {#if showPanel}
     <ParamPanel
-      {params}
+      params={localParams}
       {filePath}
       onchange={handleChange}
     />

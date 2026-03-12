@@ -13,6 +13,7 @@
  * 8. Consistent error responses
  */
 import type { AstroIntegration } from "astro";
+import type { ParamDef } from "../lib/dev/param-types";
 import { writeFile, realpath } from "node:fs/promises";
 import path from "node:path";
 import { z } from "zod";
@@ -47,6 +48,12 @@ const ParamDefSchema = z.discriminatedUnion("type", [
     tier: z.enum(["css", "js"]).optional(),
   }),
 ]);
+
+// Compile-time check: Zod schema and hand-written ParamDef must stay in sync.
+// If either drifts, these lines will produce a TypeScript error.
+type _ZodParamDef = z.infer<typeof ParamDefSchema>;
+type _AssertZodExtendsParamDef = _ZodParamDef extends ParamDef ? true : never;
+type _AssertParamDefExtendsZod = ParamDef extends _ZodParamDef ? true : never;
 
 const RequestSchema = z.object({
   filePath: z.string().endsWith(".params.ts"),

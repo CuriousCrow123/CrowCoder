@@ -9,6 +9,11 @@
   } = $props();
 
   let commitState = $state<'idle' | 'committing' | 'success' | 'error'>('idle');
+  let resetTimer: ReturnType<typeof setTimeout> | undefined;
+
+  $effect(() => {
+    return () => { if (resetTimer !== undefined) clearTimeout(resetTimer); };
+  });
 
   async function handleCommit() {
     if (commitState === 'committing') return;
@@ -34,7 +39,8 @@
     }
 
     // Reset after feedback
-    setTimeout(() => { commitState = 'idle'; }, 1500);
+    if (resetTimer !== undefined) clearTimeout(resetTimer);
+    resetTimer = setTimeout(() => { commitState = 'idle'; }, 1500);
   }
 </script>
 

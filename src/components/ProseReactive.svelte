@@ -1,13 +1,14 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
-  import { onMount } from 'svelte';
   import params from './ProseReactive.params';
   import { createParamAccessor } from '../lib/dev/param-types';
-  import { tunablePromise } from '../lib/dev/lazy';
+  import { tunablePromise, type TunableType } from '../lib/dev/lazy';
 
-  let TunableComponent = $state<any>(null);
-  onMount(() => {
-    tunablePromise?.then((c) => { TunableComponent = c; });
+  let TunableComponent = $state<TunableType | null>(null);
+  $effect(() => {
+    let cancelled = false;
+    tunablePromise?.then((c) => { if (!cancelled) TunableComponent = c; });
+    return () => { cancelled = true; };
   });
 
   let { children: slotContent }: {
@@ -17,32 +18,27 @@
   const p = createParamAccessor(params);
 </script>
 
-{#if TunableComponent}
-  <TunableComponent {params} filePath="./src/components/ProseReactive.params.ts">
-    {#snippet children(overrides)}
-      <span
-        class="prose-reactive"
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
-        style:--crossfade-duration="{p('crossfadeDuration', 'number', overrides)}ms"
-        style:--translate-y="{p('translateY', 'number', overrides)}px"
-      >
-        {@render slotContent()}
-      </span>
-    {/snippet}
-  </TunableComponent>
-{:else}
+{#snippet reactive(overrides?: Record<string, number | string | boolean>)}
   <span
     class="prose-reactive"
     role="status"
     aria-live="polite"
     aria-atomic="true"
-    style:--crossfade-duration="{p('crossfadeDuration', 'number')}ms"
-    style:--translate-y="{p('translateY', 'number')}px"
+    style:--crossfade-duration="{p('crossfadeDuration', 'number', overrides)}ms"
+    style:--translate-y="{p('translateY', 'number', overrides)}px"
   >
     {@render slotContent()}
   </span>
+{/snippet}
+
+{#if TunableComponent}
+  <TunableComponent {params} filePath="./src/components/ProseReactive.params.ts">
+    {#snippet children(overrides)}
+      {@render reactive(overrides)}
+    {/snippet}
+  </TunableComponent>
+{:else}
+  {@render reactive()}
 {/if}
 
 <style>

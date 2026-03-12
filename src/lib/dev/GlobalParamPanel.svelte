@@ -6,6 +6,11 @@
   let collapsed = $state(true);
   let params = $state<ParamDef[]>(structuredClone(designTokens));
   let commitState = $state<'idle' | 'committing' | 'success' | 'error'>('idle');
+  let resetTimer: ReturnType<typeof setTimeout> | undefined;
+
+  $effect(() => {
+    return () => { if (resetTimer !== undefined) clearTimeout(resetTimer); };
+  });
 
   function handleChange(key: string, value: number | string | boolean) {
     const param = params.find(p => p.key === key);
@@ -45,7 +50,8 @@
       commitState = 'error';
     }
 
-    setTimeout(() => { commitState = 'idle'; }, 1500);
+    if (resetTimer !== undefined) clearTimeout(resetTimer);
+    resetTimer = setTimeout(() => { commitState = 'idle'; }, 1500);
   }
 </script>
 
@@ -56,7 +62,7 @@
     aria-label="Toggle global design tokens panel"
     aria-expanded={!collapsed}
   >
-    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
       <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492"/>
     </svg>
     <span>Tokens</span>
