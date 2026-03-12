@@ -1,7 +1,7 @@
 ---
 title: "docs: Research CLAUDE.md best practices and improve project CLAUDE.md"
 type: docs
-status: active
+status: completed
 date: 2026-03-12
 ---
 
@@ -98,15 +98,15 @@ Apply research findings to the existing 87-line file. Target: ~100-120 lines aft
 
 ## Acceptance Criteria
 
-- [ ] `docs/research/claude-md-best-practices.md` exists as a self-contained, project-agnostic reference with sources
-- [ ] Project `CLAUDE.md` has a one-liner project description at the top
-- [ ] Project `CLAUDE.md` has a Commands section with actual project commands
-- [ ] The children/slotContent bullet is split into two clear bullets
-- [ ] "Small variant counts" is quantified (3 or fewer)
-- [ ] Phase 2 files in the tree are annotated as not yet created
-- [ ] Emphasis levels are audited (CAPS reserved for genuine invariants only)
-- [ ] Final CLAUDE.md is under 200 lines
-- [ ] Two atomic commits: one for research doc, one for CLAUDE.md improvement
+- [x] `docs/research/claude-md-best-practices.md` exists as a self-contained, project-agnostic reference with sources
+- [x] Project `CLAUDE.md` has a one-liner project description at the top
+- [x] Project `CLAUDE.md` has a Commands section with actual project commands
+- [x] The children/slotContent bullet is split into two clear bullets
+- [x] "Small variant counts" is quantified (3 or fewer)
+- [x] Phase 2 files in the tree are annotated as not yet created
+- [x] Emphasis levels are audited (CAPS reserved for genuine invariants only)
+- [x] Final CLAUDE.md is under 200 lines (99 lines)
+- [x] Two atomic commits: one for research doc, one for CLAUDE.md improvement
 
 ## Context
 

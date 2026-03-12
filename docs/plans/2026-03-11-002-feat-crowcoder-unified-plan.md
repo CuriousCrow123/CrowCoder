@@ -1000,7 +1000,7 @@ Self-hosted WOFF2 via Fontsource. `font-display: swap` for all three fonts *(cor
 - [x] Create color theory sample lesson demonstrating both interaction patterns
 - [x] Configure GitHub Pages deployment (`.github/workflows/deploy.yml`, SHA-pinned actions)
 - [x] Push to remote (`git remote add origin https://github.com/CuriousCrow123/CrowCoder.git && git push -u origin main`)
-- [ ] Configure GitHub Pages (Settings → Pages → Source: GitHub Actions)
+- [x] Configure GitHub Pages (Settings → Pages → Source: GitHub Actions)
 - [x] Populate `CLAUDE.md` with project conventions and security rules
 - [x] Create ADR: `docs/decisions/001-cross-island-state-sharing.md`
 - [x] **Verify production build** has zero trace of dev tooling (`grep -r` against `dist/`) — CI must fail on match
