@@ -121,6 +121,12 @@ code, pre {
   line-height: 1.5;
 }
 
+/* Inline islands: Astro wraps hydrated components in <astro-island> (display: block by default).
+   Islands used inside prose paragraphs need to be inline so they don't break text flow. */
+p > astro-island {
+  display: inline;
+}
+
 /* Vertical rhythm around interactive components */
 .interactive-section {
   margin-block: var(--component-spacing);
