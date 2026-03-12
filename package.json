@@ -1,0 +1,33 @@
+{
+  "name": "crowcoder",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/svelte": "^8.0.0",
+    "@fontsource-variable/dm-sans": "^5.2.8",
+    "@fontsource-variable/literata": "^5.2.8",
+    "@fontsource/jetbrains-mono": "^5.2.8",
+    "@tailwindcss/vite": "^4.2.1",
+    "astro": "^6.0.4",
+    "svelte": "^5.53.11",
+    "tailwindcss": "^4.2.1",
+    "typescript": "^5.9.3",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "vitest": "^4.1.0"
+  }
+}

@@ -1,0 +1,56 @@
+---
+import "../styles/global.css";
+import tokens from "../lib/design-tokens.params";
+
+// Dev-only: mount GlobalParamPanel
+const GlobalParamPanel = import.meta.env.DEV
+  ? (await import("../lib/dev/GlobalParamPanel.svelte")).default
+  : null;
+
+// Build design token CSS custom properties from params file (production path)
+const cssVars = tokens
+  .map((t) => {
+    // Map param keys to CSS custom property names
+    const cssKey = t.key
+      .replace(/([A-Z])/g, "-$1")
+      .toLowerCase();
+    const unit = "unit" in t ? (t.unit ?? "") : "";
+    return `--${cssKey}: ${t.value}${unit}`;
+  })
+  .join("; ");
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const {
+  title = "CrowCoder — Interactive Learning",
+  description = "An interactive learning experience with reactive prose and spaced repetition.",
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'"
+    />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title}</title>
+    <style set:html={`:root { ${cssVars} }`}></style>
+  </head>
+  <body>
+    <slot />
+    {GlobalParamPanel && <GlobalParamPanel client:idle />}
+    <noscript>
+      <div style="padding: 2rem; text-align: center; font-family: Georgia, serif;">
+        This learning page requires JavaScript for interactive components and quizzes.
+      </div>
+    </noscript>
+  </body>
+</html>
