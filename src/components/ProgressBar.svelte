@@ -40,10 +40,10 @@
   {@const radius = p('segmentRadius', 'number', overrides)}
   {@const gap = p('segmentGap', 'number', overrides)}
   {@const height = p('segmentHeight', 'number', overrides)}
-  {@const unseenColor = p('unseenColor', 'color', overrides)}
-  {@const dueColor = p('dueColor', 'color', overrides)}
-  {@const answeredColor = p('answeredColor', 'color', overrides)}
-  {@const masteredColor = p('masteredColor', 'color', overrides)}
+  {@const unseenColor = overrides?.['unseenColor'] != null ? String(overrides['unseenColor']) : undefined}
+  {@const dueColor = overrides?.['dueColor'] != null ? String(overrides['dueColor']) : undefined}
+  {@const answeredColor = overrides?.['answeredColor'] != null ? String(overrides['answeredColor']) : undefined}
+  {@const masteredColor = overrides?.['masteredColor'] != null ? String(overrides['masteredColor']) : undefined}
 
   <div
     class="progress-bar"
@@ -146,10 +146,10 @@
     outline-offset: 2px;
   }
 
-  .segment--unseen { background: var(--color-unseen, #d1d5db); }
-  .segment--due { background: var(--color-due, #6366f1); }
-  .segment--answered { background: var(--color-answered, #a5b4fc); }
-  .segment--mastered { background: var(--color-mastered, #16a34a); }
+  .segment--unseen { background: var(--color-unseen, var(--progress-unseen, #d1d5db)); }
+  .segment--due { background: var(--color-due, var(--progress-due, #6366f1)); }
+  .segment--answered { background: var(--color-answered, var(--progress-answered, #a5b4fc)); }
+  .segment--mastered { background: var(--color-mastered, var(--progress-mastered, #16a34a)); }
 
   /* Collapse on narrow viewports */
   @media (max-width: 480px) {

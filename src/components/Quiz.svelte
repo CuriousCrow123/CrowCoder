@@ -55,9 +55,9 @@
 
 {#snippet quizContent(overrides?: Record<string, number | string | boolean>)}
   {@const borderRadius = p('borderRadius', 'number', overrides)}
-  {@const cardBg = p('cardBg', 'color', overrides)}
-  {@const correctColor = p('correctColor', 'color', overrides)}
-  {@const incorrectColor = p('incorrectColor', 'color', overrides)}
+  {@const cardBg = overrides?.['cardBg'] != null ? String(overrides['cardBg']) : undefined}
+  {@const correctColor = overrides?.['correctColor'] != null ? String(overrides['correctColor']) : undefined}
+  {@const incorrectColor = overrides?.['incorrectColor'] != null ? String(overrides['incorrectColor']) : undefined}
 
   <div
     class="quiz-card"

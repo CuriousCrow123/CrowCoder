@@ -337,6 +337,7 @@
     padding: 0;
     max-width: min(90vw, 520px);
     width: 100%;
+    margin: auto; /* Restore centering stripped by Tailwind Preflight reset */
     background: transparent;
     overflow: visible;
   }

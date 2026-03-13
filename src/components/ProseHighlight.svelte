@@ -44,9 +44,9 @@
     onclick={handleClick}
     onkeydown={handleKeydown}
     style:--underline-thickness="{p('underlineThickness', 'number', overrides)}px"
-    style:--pulse-color={p('pulseColor', 'color', overrides)}
+    style:--pulse-color={overrides?.['pulseColor'] != null ? String(overrides['pulseColor']) : undefined}
     style:--pulse-duration="{p('pulseDuration', 'number', overrides)}ms"
-    style:--active-bg={p('activeBackground', 'color', overrides)}
+    style:--active-bg={overrides?.['activeBackground'] != null ? String(overrides['activeBackground']) : undefined}
   >
     {@render slotContent()}
   </span>
@@ -67,7 +67,7 @@
     cursor: pointer;
     text-decoration: underline;
     text-decoration-thickness: var(--underline-thickness, 2px);
-    text-decoration-color: var(--pulse-color, #6366f1);
+    text-decoration-color: var(--pulse-color, var(--highlight-pulse, #6366f1));
     text-underline-offset: 3px;
     padding: 0.05em 0.15em;
     border-radius: 3px;
@@ -77,22 +77,22 @@
   }
 
   .prose-highlight:hover {
-    background-color: color-mix(in srgb, var(--pulse-color, #6366f1) 8%, transparent);
+    background-color: color-mix(in srgb, var(--pulse-color, var(--highlight-pulse, #6366f1)) 8%, transparent);
   }
 
   .prose-highlight:focus-visible {
-    outline: 2px solid var(--pulse-color, #6366f1);
+    outline: 2px solid var(--pulse-color, var(--highlight-pulse, #6366f1));
     outline-offset: 2px;
   }
 
   .prose-highlight.active {
     background-color: var(--active-bg, color-mix(in srgb, var(--accent-color) 12%, transparent));
-    text-decoration-color: var(--pulse-color, #6366f1);
+    text-decoration-color: var(--pulse-color, var(--highlight-pulse, #6366f1));
     animation: pulse var(--pulse-duration, 600ms) ease-out;
   }
 
   @keyframes pulse {
-    0% { background-color: color-mix(in srgb, var(--pulse-color, #6366f1) 25%, transparent); }
+    0% { background-color: color-mix(in srgb, var(--pulse-color, var(--highlight-pulse, #6366f1)) 25%, transparent); }
     100% { background-color: var(--active-bg, color-mix(in srgb, var(--accent-color) 12%, transparent)); }
   }
 

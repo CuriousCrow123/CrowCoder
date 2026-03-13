@@ -57,7 +57,7 @@ This is a greenfield project. No code, dependencies, or git history exist yet.
 21. **HMR resets panel state** — After committing JS params, the gear panel closes and overrides reset. Consider `sessionStorage` persistence keyed by component ID.
 22. **~~Zod validation on write-back request body~~ RESOLVED** — Added `RequestSchema` with Zod validation in `params-writer.ts`.
 23. **`file.size` check before JSON import** — Cap at 5MB before `FileReader` to prevent tab crash on malformed files.
-24. **Dark mode interaction with design tokens** — Inline styles from `setProperty()` override media-query dark mode rules. Phase 3 must use class-based toggle.
+24. **~~Dark mode interaction with design tokens~~ RESOLVED** — Used class-based toggle (`.dark` on `<html>`). Color params only apply inline styles when explicitly overridden in dev panel; otherwise CSS variable cascade handles theming.
 25. **CSP `unsafe-eval` required for Zod v4** — Zod v4 uses `new Function()` internally which Brave blocks without `unsafe-eval` in CSP. Trade-off documented in `docs/solutions/003-csp-blocks-zod-new-function-brave.md`.
 26. **Astro slots are static HTML** — Svelte components passed as slot children of a `client:*` island are SSR'd and never hydrated. QuizPopup solves this by wrapping Quiz + Popup in a single hydration boundary. See `docs/decisions/002-island-composition-wrapper-pattern.md`.
 
@@ -1095,6 +1095,8 @@ Self-hosted WOFF2 via Fontsource. `font-display: swap` for all three fonts *(cor
 - [x] Add `<noscript>` fallback message *(already in Phase 1)*
 - [x] Final accessibility audit (focus management, ARIA, keyboard navigation across all popup modes)
 - [x] Add dark mode as first-class theme
+  - [x] Fix: quiz/progress/highlight/color-picker params injected hardcoded colors as inline styles, overriding CSS variable dark mode cascade — color params now only apply inline styles when explicitly overridden in dev tuning panel
+  - [x] Fix: modal dialog rendered at top-left corner — Tailwind v4 Preflight strips `<dialog>` default `margin: auto`; restored with explicit `margin: auto` on `.popup--modal`
 - [x] Add non-blocking review banner on return visits
 - [x] Create complete sample lesson demonstrating all features
 - [x] ~~Integration test: two islands sharing state across mixed hydration directives~~ *(moved to Phase 1)*
