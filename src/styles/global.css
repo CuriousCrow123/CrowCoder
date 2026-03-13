@@ -50,12 +50,12 @@
   --component-breakout-width: 960px;
   --paragraph-spacing: 1.5rem;
   --component-spacing: 4rem;
-  --accent-color: #6366f1;
+  --accent-color: #4f46e5;
   --background-color: #faf8f5;
 
   /* Semantic colors — light mode defaults */
   --text-color: #1a1a1a;
-  --text-muted: #6b7280;
+  --text-muted: #4b5563;
   --border-color: rgba(0, 0, 0, 0.1);
   --border-subtle: rgba(0, 0, 0, 0.06);
   --surface-color: white;
@@ -122,6 +122,27 @@ body {
   margin: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Skip link — visually hidden until focused */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 1rem;
+  z-index: 9999;
+  padding: 0.5rem 1rem;
+  background: var(--accent-color);
+  color: white;
+  border-radius: 0 0 6px 6px;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-decoration: none;
+  transition: top 150ms ease;
+}
+
+.skip-link:focus {
+  top: 0;
 }
 
 /* Site header */

@@ -41,6 +41,7 @@
 
   let containerEl = $state<HTMLElement | null>(null);
   let dialogEl = $state<HTMLDialogElement | null>(null);
+  let popupEl = $state<HTMLElement | null>(null);
 
   // Per-popup state from the multi-slot map
   let entry = $derived(popupState.active.get(id));
@@ -119,6 +120,14 @@
     }
   });
 
+  // Focus management for inline/slide-in: move focus into popup when active
+  $effect(() => {
+    if (mode === 'modal') return; // Modal uses native dialog focus
+    if (phase === 'active' && popupEl) {
+      popupEl.focus();
+    }
+  });
+
   function handleTransitionEnd() {
     clearTimeout(safetyTimer);
     if (phase === 'entering') onEntered(id);
@@ -174,6 +183,7 @@
     {#if isActive}
       {#if mode === 'inline'}
         <div
+          bind:this={popupEl}
           class="popup popup--inline"
           class:entering={phase === 'entering'}
           class:active={phase === 'active'}
@@ -211,6 +221,7 @@
 
       {:else if mode === 'slide-in'}
         <div
+          bind:this={popupEl}
           class="popup popup--slide-in"
           class:entering={phase === 'entering'}
           class:active={phase === 'active'}
