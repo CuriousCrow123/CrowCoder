@@ -43,21 +43,23 @@ This is a greenfield project. No code, dependencies, or git history exist yet.
 10. **~~Design tokens have no production path~~ RESOLVED** — `Base.astro` renders `:root` CSS declarations from `design-tokens.params.ts` at build time via `set:html`.
 11. **~~Integration test belongs in Phase 1, not Phase 3~~ RESOLVED** — Moved to Phase 1 checklist.
 12. **~~Add `object-src 'none'; base-uri 'self'; form-action 'self'` to CSP~~ RESOLVED** — Added to `Base.astro` CSP meta tag.
-13. **IntersectionObserver grace period not implemented** — The `scroll-observer.ts` code fires immediately; the 1-second grace period mentioned in the spec is not in the code.
-14. **Define composite `PopupState` type** — Combine `current`, `phase`, and `queue` into a single interface with explicit invariants.
-15. **Quiz wiring layer undefined** — Specify that Quiz's `onresult` callback is connected to the progress store at the page level, not inside Popup.
+13. **~~IntersectionObserver grace period not implemented~~ RESOLVED** — Implemented in `scroll-observer.ts` with a 1-second grace period timer that delays callback execution after intersection.
+14. **~~Define composite `PopupState` type~~ RESOLVED** — `popup.svelte.ts` now uses `PopupEntry` interface with `request` and `phase` fields, stored in `SvelteMap<string, PopupEntry>` for multi-slot concurrent popups.
+15. **~~Quiz wiring layer undefined~~ RESOLVED** — `QuizPopup.svelte` is the composition wrapper that connects Quiz to the progress store and manages popup lifecycle. Astro slots are static HTML, so Quiz and Popup must share a single hydration boundary.
 16. **~~Below-fold ProseHighlight/ProseReactive should use `client:visible`~~ REVISED** — All interactive `ProseHighlight` instances now use `client:load` to avoid non-functional buttons before hydration (review finding P3 #12).
 
 ### New Considerations
 
 17. **~~TOCTOU in path validation~~ RESOLVED** — `realpath` now runs first, then `startsWith` check against resolved root.
 18. **~~Top-level `await import()` blocks component render~~ RESOLVED** — Created `src/lib/dev/lazy.ts` with shared promise pattern resolved via `onMount`. Svelte 5 actually *forbids* top-level `await` (compiler error, not just perf issue).
-19. **`beforeunload` flush** — If the user closes the tab during the 500ms debounce, the last write is lost. Add a flush handler.
+19. **~~`beforeunload` flush~~ RESOLVED** — Implemented in `persistence.ts`. Flushes pending debounced writes on `beforeunload`.
 20. **~~Add `tier` indicator to ParamDef~~ RESOLVED** — Added `tier?: 'css' | 'js'` to `ParamBase`. `ParamInput` renders JS tier badge.
 21. **HMR resets panel state** — After committing JS params, the gear panel closes and overrides reset. Consider `sessionStorage` persistence keyed by component ID.
 22. **~~Zod validation on write-back request body~~ RESOLVED** — Added `RequestSchema` with Zod validation in `params-writer.ts`.
 23. **`file.size` check before JSON import** — Cap at 5MB before `FileReader` to prevent tab crash on malformed files.
 24. **Dark mode interaction with design tokens** — Inline styles from `setProperty()` override media-query dark mode rules. Phase 3 must use class-based toggle.
+25. **CSP `unsafe-eval` required for Zod v4** — Zod v4 uses `new Function()` internally which Brave blocks without `unsafe-eval` in CSP. Trade-off documented in `docs/solutions/003-csp-blocks-zod-new-function-brave.md`.
+26. **Astro slots are static HTML** — Svelte components passed as slot children of a `client:*` island are SSR'd and never hydrated. QuizPopup solves this by wrapping Quiz + Popup in a single hydration boundary. See `docs/decisions/002-island-composition-wrapper-pattern.md`.
 
 ## Problem Statement
 
@@ -105,8 +107,9 @@ src/
     ColorPicker.params.ts           # Wheel size, handle radius, ring width
     Popup.svelte                    # Popup container (trigger + mode logic)
     Popup.params.ts                 # Enter/exit duration, grace period, backdrop opacity
-    Quiz.svelte                     # Pure quiz content (question, answers, feedback)
+    Quiz.svelte                     # Pure answering/review component (question, radio answers, correct/incorrect display)
     Quiz.params.ts                  # Card border radius, background, feedback duration
+    QuizPopup.svelte                # Composition wrapper managing Quiz + Popup lifecycle (single hydration boundary)
     Hint.svelte                     # Non-quiz hint/definition content
     ProgressBar.svelte              # Segmented progress map
     ProgressBar.params.ts           # Segment colors, border radius, spacing
@@ -652,85 +655,72 @@ export function paramsWriterIntegration(): AstroIntegration {
 
 All dev-tool imports are gated behind `import.meta.env.DEV`. Vite replaces this with `false` at build time, and tree-shaking eliminates the entire import chain.
 
-**`Base.astro` dev-only mount:**
+**`DevGlobalPanel.astro` dev-only mount:**
+
+The original approach (`await import()` in frontmatter + `client:idle`) was replaced because Astro's renderer cannot resolve dynamic imports for `client:*` directives. The new approach bypasses Astro hydration entirely — a `<script>` tag with `import.meta.env.DEV` guard mounts the component directly via Svelte's `mount()` API:
+
 ```astro
 ---
-const GlobalParamPanel = import.meta.env.DEV
-  ? (await import('../lib/dev/GlobalParamPanel.svelte')).default
-  : null;
+// Dev-only wrapper: mounts GlobalParamPanel via Svelte's mount() API.
+// Bypasses Astro's hydration directives (which can't resolve dynamic imports)
 ---
-<html>
-  <body>
-    <slot />
-    {GlobalParamPanel && <GlobalParamPanel client:idle />}
-  </body>
-</html>
+<div id="dev-global-panel"></div>
+<script>
+  if (import.meta.env.DEV) {
+    const { default: GlobalParamPanel } = await import('../lib/dev/GlobalParamPanel.svelte');
+    const { mount } = await import('svelte');
+    const target = document.getElementById('dev-global-panel');
+    if (target) { mount(GlobalParamPanel, { target }); }
+  }
+</script>
 ```
 
 **Post-build verification:** After the first `astro build`, run `grep -r "Tunable\|ParamPanel\|ParamInput\|GlobalParamPanel\|__params" dist/` to confirm zero leakage. Add this as a CI check. **Note:** `param-types` and `design-tokens.params` are intentionally present in production — `createParamAccessor` provides runtime default values, and design tokens are imported at build time by `Base.astro`.
 
 ### Quiz & Popup System
 
-**Quiz** is a pure content component — renders question, answer options, feedback. Reports raw result `{ questionId, selectedAnswer, correct: boolean }`. Does NOT know about SM-2 quality scores — the scoring policy lives in the domain layer (`progress.svelte.ts` translates `correct: boolean` → `SM2Quality`).
+**Quiz** is a pure answering/review component — renders question, radio-button answer options, and correct/incorrect feedback in review mode. Reports raw result `{ questionId, selectedAnswer, correct: boolean }`. Does NOT know about SM-2 quality scores — the scoring policy lives in the domain layer (`progress.svelte.ts` translates `correct: boolean` → `SM2Quality`).
 
-**Quiz has two modes:**
-1. **First encounter (new question):** Multiple-choice with radio buttons + submit button.
-2. **Review encounter (previously answered):** 2-button recall — "Show me again" / "I remember".
+**Quiz has two visual states** (controlled by the `mode` prop from QuizPopup):
+1. **`'answer'` mode:** Multiple-choice with radio buttons (using `bind:group`) + submit button.
+2. **`'review'` mode:** Shows correct/incorrect answer highlighting + "Try again" button.
 
-Both map to SM-2: first-encounter `correct: true` → quality 5, `correct: false` → quality 1. Review "I remember" → quality 5, "Show me again" → quality 1.
+**QuizPopup** is a composition wrapper (`src/components/QuizPopup.svelte`) that manages the Quiz + Popup lifecycle within a single hydration boundary. This is necessary because **Astro slots are static HTML** — Svelte components passed as slot children of a `client:*` island are SSR'd and never hydrated. QuizPopup wraps both Popup and Quiz so they share one hydration boundary and can interact reactively. See `docs/decisions/002-island-composition-wrapper-pattern.md`.
 
-**Quiz interaction sequences (screen by screen):**
+**Quiz interaction sequence (screen by screen):**
 
-*First encounter — correct:*
-1. Question displayed with radio-button answers
-2. Student selects answer, clicks "Submit"
-3. Feedback: "Correct!" with brief visual celebration. Answer highlighted green.
-4. Quiz auto-collapses after 2 seconds (or student clicks "Continue")
+*Answering:*
+1. Popup appears (via scroll trigger or manual). Quiz shows question with radio-button answers.
+2. Student selects answer, clicks "Submit".
+3. QuizPopup records the answer in the progress store, dismisses the popup.
+4. A "Review answer" button appears at the quiz location.
 
-*First encounter — incorrect:*
-1. Student selects wrong answer, clicks "Submit"
-2. Feedback: "Not quite — the answer is **[correct answer]**." Wrong answer shown in red, correct answer highlighted green.
-3. Quiz stays visible until student clicks "Got it" (not auto-collapse — let them read the correct answer)
-4. SM-2 records quality 1. Next review scheduled per SM-2 interval.
+*Reviewing:*
+1. Student clicks "Review answer". QuizPopup reopens popup in review mode.
+2. Quiz shows the question with correct answer highlighted green, incorrect selection (if any) in red.
+3. A "Try again" button is available to re-attempt.
 
-*Review encounter:*
-1. Question displayed (same text as first encounter)
-2. Two buttons: "Show me again" / "I remember"
-3. "I remember" → brief "Nice!" feedback, collapses. SM-2 quality 5.
-4. "Show me again" → reveals the correct answer with explanation. Student clicks "Got it" to dismiss. SM-2 quality 1.
+*Dismissed without answering:*
+1. If student dismisses the popup without submitting, a "Try quiz" button appears.
+2. Clicking it reopens the popup in answer mode.
 
 **Inline quiz dismiss affordance:** All popup modes (including inline) render a small "x" close button in the top-right corner. Dismissed quizzes are not tracked by SM-2 and re-trigger on next page load.
 
-**Popup** owns trigger and presentation logic. Content (Quiz or Hint) is passed via Svelte 5's `{@render children()}` pattern:
-
-```svelte
-<!-- Popup.svelte -->
-<script lang="ts">
-  let { children, trigger, mode = 'inline' } = $props();
-</script>
-
-{#if visible}
-  <div class="popup popup--{mode}">
-    {@render children?.()}
-  </div>
-{/if}
-```
+**Popup** owns trigger and presentation logic. QuizPopup (or Hint) composes Popup internally — content is NOT passed via Astro slots.
 
 **Authoring format:**
 ```astro
 <!-- In index.astro -->
-<Popup client:visible trigger="scroll" mode="inline">
-  <Quiz
-    id="color-primary"
-    question="Which of these is NOT a primary color?"
-    answers={["Red", "Green", "Blue"]}
-    correctIndex={1}
-  />
-</Popup>
+<QuizPopup client:visible id="color-primary"
+  question="Which of these is NOT a primary color?"
+  answers={["Red", "Green", "Blue", "Yellow"]}
+  correctIndex={1} />
 ```
 
+**Why QuizPopup instead of `<Popup><Quiz/></Popup>`:** Astro slots are static HTML — Svelte components passed as slot children of a `client:*` island are SSR'd and never hydrated. If a child component needs interactivity (Quiz does), parent + child must be wrapped in a single Svelte component so they share one hydration boundary.
+
 **Trigger types:**
-- `trigger="scroll"` — single shared IntersectionObserver (threshold 0.3, `rootMargin: '0px 0px -50px 0px'`), fires once per page load. 1-second grace period.
+- `trigger="scroll"` — single shared IntersectionObserver (threshold `0` for zero-height container compatibility, `rootMargin: '0px 0px -50px 0px'`), fires once per page load. 1-second grace period.
 - `trigger="manual"` — renders a button the student clicks
 - `trigger="component-complete"` — watches a store value via `$derived`
 
@@ -749,14 +739,15 @@ Both map to SM-2: first-encounter `correct: true` → quality 5, `correct: false
 type PopupPhase = 'idle' | 'entering' | 'active' | 'exiting';
 ```
 
-Rules: only advance on `idle`; exit animation uses `transitionend` (not `setTimeout`); `prefers-reduced-motion` bypasses `entering`/`exiting` entirely. Max queue depth: 3-5 with "dismiss all" escape. Dismissed (unanswered) quizzes re-trigger on next page load.
+Rules: exit animation uses `transitionend` (not `setTimeout`); `prefers-reduced-motion` bypasses `entering`/`exiting` entirely. Dismissed (unanswered) quizzes re-trigger on next page load.
 
-**Slide-in coexistence constraint:** The single `current`/`phase` state machine tracks one popup at a time. The mode table says slide-in "can coexist with inline popups" — this requires either (a) separate state tracks per mode, or (b) dropping coexistence from v1 and treating slide-in as exclusive like modal. **Recommendation: drop coexistence in v1.** All modes go through the single queue. Add coexistence in a future version if needed.
+**Multi-slot concurrent architecture:** State lives in `popupState.active` (`SvelteMap<string, PopupEntry>`) — each popup has an independent lifecycle with its own phase. Multiple popups can be active concurrently (e.g. quiz + hint open simultaneously). `MAX_CONCURRENT = 10`. All lifecycle functions take an `id` parameter: `requestPopup(id, mode)`, `onEntered(id)`, `dismiss(id)`, `onExited(id)`. Trigger deduplication uses a `triggeredThisSession` Set; use `markTriggered(id)` to suppress without opening, `resetTrigger(id)` to re-enable.
 
 **Shared scroll observer:**
 ```typescript
 // src/lib/scroll-observer.ts
 const callbacks = new Map<Element, () => void>();
+const timers = new Map<Element, ReturnType<typeof setTimeout>>();
 let observer: IntersectionObserver | null = null;
 
 function getObserver(): IntersectionObserver {
@@ -765,13 +756,22 @@ function getObserver(): IntersectionObserver {
       (entries) => {
         for (const entry of entries) {
           if (entry.isIntersecting) {
-            callbacks.get(entry.target)?.();
+            const cb = callbacks.get(entry.target);
+            if (cb) {
+              // 1-second grace period: delay callback to avoid instant popup
+              // when element is already visible at hydration time
+              const timer = setTimeout(() => {
+                timers.delete(entry.target);
+                cb();
+              }, 1000);
+              timers.set(entry.target, timer);
+            }
             observer!.unobserve(entry.target);
             callbacks.delete(entry.target);
           }
         }
       },
-      { threshold: 0.3, rootMargin: '0px 0px -50px 0px' }
+      { threshold: 0, rootMargin: '0px 0px -50px 0px' }
     );
   }
   return observer;
@@ -780,7 +780,12 @@ function getObserver(): IntersectionObserver {
 export function observeOnce(el: Element, callback: () => void): () => void {
   callbacks.set(el, callback);
   getObserver().observe(el);
-  return () => { callbacks.delete(el); getObserver().unobserve(el); };
+  return () => {
+    callbacks.delete(el);
+    const timer = timers.get(el);
+    if (timer) { clearTimeout(timer); timers.delete(el); }
+    getObserver().unobserve(el);
+  };
 }
 ```
 
@@ -821,6 +826,7 @@ interface CardData {
   dueDate: ISODateString;
   lastAnswer: SM2Quality;
   lastReviewed: ISODateString;
+  lastSelectedIndex?: number;  // tracks student's most recent answer choice for review display
 }
 
 interface ProgressData {
@@ -845,6 +851,7 @@ const CardDataSchema = z.object({
   dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}T/),
   lastAnswer: z.literal([0, 1, 2, 3, 4, 5]),
   lastReviewed: z.string().regex(/^\d{4}-\d{2}-\d{2}T/),
+  lastSelectedIndex: z.number().int().min(0).optional(),
 });
 
 const ProgressDataSchema = z.object({
@@ -915,7 +922,7 @@ Codify in `CLAUDE.md` before any code is written:
 - **NEVER** use plain `Set`/`Map` inside `$state` — use `SvelteSet`/`SvelteMap` from `svelte/reactivity`.
 - All untrusted data passes through Zod v4 schema validator before entering stores.
 - Pin GitHub Actions to commit SHAs.
-- CSP `<meta>` tag: `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self'`.
+- CSP `<meta>` tag: `default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self'`. (`unsafe-eval` required for Zod v4 `new Function()` usage in Brave — see `docs/solutions/003-csp-blocks-zod-new-function-brave.md`)
 - Wrap `JSON.parse()` in try/catch at all call sites.
 - Write-back endpoint: path validation, file type restriction, body size limit, CSRF check, server-side content generation.
 
@@ -1040,7 +1047,7 @@ Self-hosted WOFF2 via Fontsource. `font-display: swap` for all three fonts *(cor
 - [x] Implement component-complete trigger in Popup (watches store via $derived)
 - [x] Build popup state machine in `popup.svelte.ts`
 - [x] Add trigger deduplication (module-level Set)
-- [x] Add max queue depth (3-5) with "dismiss all" escape
+- [x] Add multi-slot concurrent popup support (`SvelteMap<string, PopupEntry>`, `MAX_CONCURRENT = 10`)
 - [x] Implement `mode="inline"` — expand in-place
 - [x] Implement `mode="modal"` — native `<dialog>` + `showModal()`
 - [x] Implement `mode="slide-in"` — side panel, non-blocking
@@ -1065,6 +1072,7 @@ Self-hosted WOFF2 via Fontsource. `font-display: swap` for all three fonts *(cor
 **Files:**
 - `src/components/Popup.svelte`, `Popup.params.ts`
 - `src/components/Quiz.svelte`, `Quiz.params.ts`
+- `src/components/QuizPopup.svelte`
 - `src/components/Hint.svelte`
 - `src/components/ProgressBar.svelte`, `ProgressBar.params.ts`
 - `src/components/ExportImport.svelte`
@@ -1186,7 +1194,7 @@ No backend, database, or external services required.
 | Hydration timing causes flickering | Medium | Low | Tiered hydration + CSS skeleton placeholders |
 | localStorage unavailable | Medium | Medium | In-memory fallback + warning banner |
 | SM-2 parameters don't feel right | Medium | Low | 2-button model, easy to tune |
-| Popup queue overwhelm on fast scroll | Medium | Low | Max queue depth + "dismiss all" |
+| Popup overwhelm on fast scroll | Medium | Low | `MAX_CONCURRENT = 10` + trigger deduplication |
 | New `.params.ts` not discovered without reload | Expected | Low | Vite limitation; document behavior |
 | Write-back endpoint path traversal | Low | High | 8-point security hardening (see table above) |
 
@@ -1350,25 +1358,27 @@ Inline styles from `setProperty()` override media-query dark mode rules. Phase 3
 Add missing directives. Updated recommendation:
 
 ```
-default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'
+default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'
 ```
 
-`script-src 'unsafe-inline'` is required by Astro/Svelte hydration. The `{@html}` prohibition is the primary XSS defense; CSP is defense-in-depth.
+`script-src 'unsafe-inline'` is required by Astro/Svelte hydration. `'unsafe-eval'` is required because Zod v4 uses `new Function()` internally, which Brave blocks without it (see `docs/solutions/003-csp-blocks-zod-new-function-brave.md`). The `{@html}` prohibition is the primary XSS defense; CSP is defense-in-depth.
 
 ### Quiz & Popup System
 
-**Define composite `PopupState` type** (Architecture Strategist)
+**~~Define composite `PopupState` type~~ RESOLVED** (Architecture Strategist)
+
+Implemented as multi-slot concurrent architecture using `SvelteMap<string, PopupEntry>`:
 
 ```typescript
-interface PopupState {
-  current: PopupRequest | null;
+interface PopupEntry {
+  request: PopupRequest;
   phase: PopupPhase;
-  queue: PopupRequest[];
 }
-// Invariant: phase !== 'idle' implies current !== null
+// popupState.active: SvelteMap<string, PopupEntry>
+// Each popup has independent lifecycle; MAX_CONCURRENT = 10
 ```
 
-Also define queue-full policy: when `queue.length >= maxDepth` and a new popup triggers, drop the new one silently (preserving earlier, higher-priority quizzes).
+Queue-based single-popup model was replaced with concurrent map. Each popup identified by `id` parameter.
 
 **`transitionend` safety timeout** (Frontend Races Reviewer — HIGH, Architecture Strategist)
 Three failure modes: (1) transition never starts (element hidden), (2) `prefers-reduced-motion` partially applied, (3) multiple `transitionend` events from multi-property transitions. Fixes:
@@ -1376,27 +1386,11 @@ Three failure modes: (1) transition never starts (element hidden), (2) `prefers-
 - Filter `event.propertyName` to act on one specific property (e.g., `opacity`).
 - For `prefers-reduced-motion`, skip directly `idle → active → idle` synchronously — do not apply transition classes at all.
 
-**IntersectionObserver grace period not in code** (Frontend Races Reviewer — MEDIUM)
-The plan specifies a 1-second grace period for scroll triggers, but `scroll-observer.ts` fires the callback immediately. If an element is already visible when `observe()` is called (common with `client:visible` islands), the popup appears instantly. Implement the delay in the callback:
+**~~IntersectionObserver grace period not in code~~ RESOLVED** (Frontend Races Reviewer — MEDIUM)
+Implemented in `scroll-observer.ts` with a 1-second grace period timer. The observer stores timers in a `Map<Element, ReturnType<typeof setTimeout>>` and the cleanup function cancels pending timers. Threshold changed from `0.3` to `0` for zero-height container compatibility (see `docs/solutions/002-intersection-observer-zero-height-elements.md`).
 
-```typescript
-export function observeOnce(el: Element, callback: () => void, graceMs = 0): () => void {
-  let canceled = false;
-  callbacks.set(el, () => {
-    if (canceled) return;
-    if (graceMs > 0) {
-      setTimeout(() => { if (!canceled) callback(); }, graceMs);
-    } else {
-      callback();
-    }
-  });
-  getObserver().observe(el);
-  return () => { canceled = true; callbacks.delete(el); getObserver().unobserve(el); };
-}
-```
-
-**Quiz wiring layer** (Architecture Strategist)
-Quiz exposes an `onresult` callback prop. The wiring to `progress.svelte.ts` should happen at the page/layout level (`index.astro` or a thin adapter component), not inside Popup. This keeps Quiz pure and Popup uninvolved in scoring.
+**~~Quiz wiring layer~~ RESOLVED** (Architecture Strategist)
+`QuizPopup.svelte` is the composition controller that wires Quiz's `onresult` callback to `progress.svelte.ts`. This is neither at the page level nor inside Popup — QuizPopup manages answered state, quiz mode (`'answer'`/`'review'`), focus management, and screen reader announcements. Quiz remains pure (no store imports); Popup remains uninvolved in scoring.
 
 ### Persistence & Auto-Save
 
@@ -1425,8 +1419,8 @@ $effect(() => {
 });
 ```
 
-**`beforeunload` flush** (Frontend Races Reviewer)
-If the user closes the tab during the 500ms debounce, the last write is lost. Add:
+**~~`beforeunload` flush~~ RESOLVED** (Frontend Races Reviewer)
+Implemented in `persistence.ts`. If the user closes the tab during the 500ms debounce, the flush handler saves immediately:
 
 ```typescript
 window.addEventListener('beforeunload', () => {
