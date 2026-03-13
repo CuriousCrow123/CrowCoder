@@ -32,6 +32,9 @@ See ADR: `docs/decisions/001-cross-island-state-sharing.md`
 - Export `$state` as **objects** and mutate properties — never export reassignable `$state` primitives
 - Island root components import from stores directly; intra-island children receive data as props
 - Never use plain `Set`/`Map` inside `$state` — use `SvelteSet`/`SvelteMap` from `svelte/reactivity`
+- **SvelteMap values are NOT deeply reactive** — use immutable entry replacement via `.set(id, { ...entry, phase })`, never mutate properties in-place
+- When checking localStorage-dependent state at mount (e.g. `hasBeenAnswered`), use `$state(fn())` to lock the value — do NOT use `$derived` which would re-evaluate mid-interaction
+- Use `bind:group` for radio/checkbox groups, `bind:checked` for lone checkboxes, `bind:value` for text/number/range inputs — bare `checked={expr}` or `value={expr}` without `bind:` can make inputs read-only in Svelte 5 runes mode
 
 ### Types
 
@@ -57,8 +60,21 @@ See ADR: `docs/decisions/001-cross-island-state-sharing.md`
 - Dev imports use `tunablePromise` from `lib/dev/lazy.ts` (resolved via `onMount`) — Svelte 5 disallows top-level `await`
 - Use `{#if}` branching for 3 or fewer variants, not dynamic components
 - Hydration directives: `client:load` for above-fold, `client:visible` for below-fold, `client:idle` for low-priority
+- **`client:visible` + IntersectionObserver double-hop:** components using `client:visible` hydrate asynchronously after entering the viewport. Any post-hydration IntersectionObserver (e.g. scroll triggers) starts late — the target element may have zero height before content is injected. Always use `threshold: 0` and ensure observed elements have `min-height: 1px` (see `docs/solutions/002-intersection-observer-zero-height-elements.md`)
 - Astro hydrated components require **static imports** — never use dynamic `await import()` for components that need `client:*` directives (Astro's renderer can't resolve them); for conditional rendering, use a thin `.astro` wrapper with a static import + `import.meta.env.DEV` gate
+- **Exception for dev-only components that leak into production via static import:** bypass Astro hydration entirely — use a `<script>` with dynamic `import()` inside an `import.meta.env.DEV` guard and mount via Svelte's `mount()` API (see `DevGlobalPanel.astro`)
+- **Astro slots are static HTML** — Svelte components passed as slot children of a `client:*` island are SSR'd and never hydrated. If a child component needs interactivity, wrap parent + child in a single Svelte component so they share one hydration boundary (see `QuizPopup.svelte`)
 - `<astro-island>` defaults to `display: block` — global CSS includes `p > astro-island { display: inline }` to keep inline islands flowing within prose
+
+### Popup System
+
+- Multi-slot: multiple popups can be active concurrently (e.g. quiz + hint open simultaneously)
+- State lives in `popupState.active` (`SvelteMap<string, PopupEntry>`) — each popup has independent lifecycle
+- All lifecycle functions take an `id` parameter: `requestPopup(id, mode)`, `onEntered(id)`, `dismiss(id)`, `onExited(id)`
+- Trigger deduplication: `triggeredThisSession` Set prevents re-triggering per page load; use `markTriggered(id)` to suppress without opening, `resetTrigger(id)` to re-enable
+- Popup.svelte renders a "Show hint" button when `trigger='manual'` — composition wrappers (e.g. QuizPopup) should NOT switch trigger to 'manual' to suppress scroll; instead use `markTriggered(id)` to suppress the scroll trigger while keeping the original trigger mode
+- `aria-live` regions must live OUTSIDE Popup's `{#if isActive}` block — otherwise the region is destroyed before screen readers process announcements
+- QuizPopup is a composition controller, not a thin passthrough — it manages answered state, quiz mode, focus management, and screen reader announcements
 
 ### Security Rules
 
@@ -74,6 +90,8 @@ See ADR: `docs/decisions/001-cross-island-state-sharing.md`
 - Integration test for cross-island state sharing (Phase 1 canary)
 - Post-build grep for dev tooling leakage (CI check)
 - Major version bumps of `astro`, `@astrojs/svelte`, or `vite` require re-running the integration test
+- **Always kill stale dev servers before testing** — `pkill -f "astro dev"` then `npm run dev`. Multiple servers on different ports cause confusion when the browser points at stale code
+- When making changes to shared state modules (`.svelte.ts`), verify with a headless browser test that the full hydration + interaction cycle works, not just unit tests
 
 ### Commits
 
