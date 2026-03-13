@@ -8,6 +8,7 @@ import QuizPopup from "../components/QuizPopup.svelte";
 import Hint from "../components/Hint.svelte";
 import ProgressBar from "../components/ProgressBar.svelte";
 import ExportImport from "../components/ExportImport.svelte";
+import ReviewBanner from "../components/ReviewBanner.svelte";
 
 const quizIds = [
   "color-primary",
@@ -21,6 +22,7 @@ const quizIds = [
   <main class="prose-column" style="padding-block: 3rem;">
     <h1>Understanding Color Theory</h1>
 
+    <ReviewBanner client:load />
     <ProgressBar client:load quizIds={quizIds} />
 
     <p>
