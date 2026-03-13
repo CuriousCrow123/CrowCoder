@@ -9,7 +9,7 @@
     popupState,
     requestPopup,
     onEntered,
-    dismissCurrent,
+    dismiss,
     onExited,
     resetTrigger,
     wasTriggered,
@@ -41,11 +41,11 @@
 
   let containerEl = $state<HTMLElement | null>(null);
   let dialogEl = $state<HTMLDialogElement | null>(null);
-  let dismissed = $state(false);
 
-  // Is this popup currently displayed?
-  let isActive = $derived(popupState.current?.id === id);
-  let phase = $derived(isActive ? popupState.phase : 'idle');
+  // Per-popup state from the multi-slot map
+  let entry = $derived(popupState.active.get(id));
+  let isActive = $derived(!!entry);
+  let phase = $derived(entry?.phase ?? 'idle');
 
   // Reduced motion preference
   let prefersReducedMotion = $state(false);
@@ -55,8 +55,9 @@
 
   // --- Trigger logic ---
 
-  // Scroll trigger
-  onMount(() => {
+  // Scroll trigger — use $effect so observer re-registers when containerEl
+  // changes (e.g., when TunableComponent loads and recreates the DOM tree).
+  $effect(() => {
     if (trigger !== 'scroll' || !containerEl) return;
     return observeOnce(containerEl, () => {
       requestPopup(id, mode);
@@ -88,19 +89,19 @@
 
     if (phase === 'entering') {
       if (prefersReducedMotion) {
-        onEntered();
+        onEntered(id);
       } else {
         clearTimeout(safetyTimer);
-        safetyTimer = setTimeout(onEntered, p('enterDuration', 'number') + 100);
+        safetyTimer = setTimeout(() => onEntered(id), p('enterDuration', 'number') + 100);
       }
     }
 
     if (phase === 'exiting') {
       if (prefersReducedMotion) {
-        onExited();
+        onExited(id);
       } else {
         clearTimeout(safetyTimer);
-        safetyTimer = setTimeout(onExited, p('exitDuration', 'number') + 100);
+        safetyTimer = setTimeout(() => onExited(id), p('exitDuration', 'number') + 100);
       }
     }
 
@@ -120,13 +121,12 @@
 
   function handleTransitionEnd() {
     clearTimeout(safetyTimer);
-    if (phase === 'entering') onEntered();
-    if (phase === 'exiting') onExited();
+    if (phase === 'entering') onEntered(id);
+    if (phase === 'exiting') onExited(id);
   }
 
   function handleDismiss() {
-    dismissed = true;
-    dismissCurrent();
+    dismiss(id);
     // Allow re-triggering dismissed quizzes (plan: "Dismissed quizzes re-trigger on next page load")
     resetTrigger(id);
   }
@@ -160,8 +160,13 @@
     style:--backdrop-opacity={backdropOp}
     style:--slide-width="{slideW}px"
   >
-    {#if trigger === 'manual' && !isActive}
-      <button class="popup-trigger-btn" onclick={handleManualTrigger}>
+    {#if trigger === 'manual'}
+      <button
+        class="popup-trigger-btn"
+        onclick={handleManualTrigger}
+        aria-expanded={isActive}
+        style:display={isActive ? 'none' : undefined}
+      >
         Show hint
       </button>
     {/if}
@@ -176,7 +181,8 @@
           ontransitionend={handleTransitionEnd}
           onkeydown={handleKeydown}
           role="region"
-          aria-label="Popup content"
+          aria-label="Popup: {id}"
+          tabindex="-1"
         >
           <button class="popup-close" onclick={handleDismiss} aria-label="Close">
             <span aria-hidden="true">×</span>
@@ -212,7 +218,7 @@
           ontransitionend={handleTransitionEnd}
           onkeydown={handleKeydown}
           role="complementary"
-          aria-label="Side panel"
+          aria-label="Side panel: {id}"
           tabindex="-1"
         >
           <button class="popup-close" onclick={handleDismiss} aria-label="Close">
@@ -238,6 +244,7 @@
 <style>
   .popup-container {
     position: relative;
+    min-height: 1px; /* Ensures IntersectionObserver can detect zero-content containers */
   }
 
   /* --- Close button (shared) --- */
