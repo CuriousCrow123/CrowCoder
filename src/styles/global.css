@@ -53,6 +53,25 @@
   --accent-color: #6366f1;
   --background-color: #faf8f5;
 
+  /* Semantic colors — light mode defaults */
+  --text-color: #1a1a1a;
+  --text-muted: #6b7280;
+  --border-color: rgba(0, 0, 0, 0.1);
+  --border-subtle: rgba(0, 0, 0, 0.06);
+  --surface-color: white;
+  --surface-hover: rgba(0, 0, 0, 0.04);
+  --quiz-card-bg: #fffbf0;
+  --hint-bg: #f0f4ff;
+  --hint-border: rgba(99, 102, 241, 0.15);
+  --success-color: #16a34a;
+  --error-color: #dc2626;
+  --warning-bg: #fffbeb;
+  --warning-border: #fde68a;
+  --warning-text: #92400e;
+  --confirm-bg: #fef2f2;
+  --confirm-border: #fecaca;
+  --shadow-color: rgba(0, 0, 0, 0.04);
+
   /* Typography scale */
   --text-base: 19px;
   --text-sm: 15px;
@@ -63,12 +82,38 @@
   --text-quiz-question: 17px;
   --text-quiz-answer: 16px;
   --text-progress: 14px;
+
+  color-scheme: light dark;
+}
+
+/* Dark mode */
+:root.dark {
+  --accent-color: #818cf8;
+  --background-color: #0f172a;
+  --text-color: #e2e8f0;
+  --text-muted: #94a3b8;
+  --border-color: rgba(255, 255, 255, 0.1);
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --surface-color: #1e293b;
+  --surface-hover: rgba(255, 255, 255, 0.06);
+  --quiz-card-bg: #1e293b;
+  --hint-bg: rgba(99, 102, 241, 0.08);
+  --hint-border: rgba(129, 140, 248, 0.2);
+  --success-color: #4ade80;
+  --error-color: #f87171;
+  --warning-bg: rgba(251, 191, 36, 0.1);
+  --warning-border: rgba(251, 191, 36, 0.3);
+  --warning-text: #fbbf24;
+  --confirm-bg: rgba(248, 113, 113, 0.1);
+  --confirm-border: rgba(248, 113, 113, 0.3);
+  --shadow-color: rgba(0, 0, 0, 0.3);
+  color-scheme: dark;
 }
 
 html {
   font-size: var(--text-base);
   background-color: var(--background-color);
-  color: #1a1a1a;
+  color: var(--text-color);
 }
 
 body {
@@ -77,6 +122,15 @@ body {
   margin: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Site header */
+.site-header {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.75rem 1.5rem;
+  max-width: var(--component-breakout-width);
+  margin-inline: auto;
 }
 
 /* Prose column */

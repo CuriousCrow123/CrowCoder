@@ -108,7 +108,7 @@
     font-family: inherit;
     font-size: inherit;
     font-weight: 500;
-    color: #6b7280;
+    color: var(--text-muted, #6b7280);
     padding: 0.25rem 0;
   }
 

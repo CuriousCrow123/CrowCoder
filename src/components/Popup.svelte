@@ -258,18 +258,18 @@
     align-items: center;
     justify-content: center;
     border: none;
-    background: rgba(0, 0, 0, 0.06);
+    background: var(--border-subtle, rgba(0, 0, 0, 0.06));
     border-radius: 50%;
     cursor: pointer;
     font-size: 16px;
-    color: #6b7280;
+    color: var(--text-muted, #6b7280);
     transition: background-color 150ms ease;
     z-index: 1;
   }
 
   .popup-close:hover {
-    background: rgba(0, 0, 0, 0.12);
-    color: #1a1a1a;
+    background: var(--border-color, rgba(0, 0, 0, 0.12));
+    color: var(--text-color, #1a1a1a);
   }
 
   .popup-close:focus-visible {
@@ -290,7 +290,7 @@
   }
 
   .popup-trigger-btn:hover {
-    background: rgba(99, 102, 241, 0.06);
+    background: color-mix(in srgb, var(--accent-color) 6%, transparent);
   }
 
   /* --- Inline mode --- */
@@ -372,7 +372,7 @@
     width: var(--slide-width, 380px);
     max-width: 90vw;
     background: var(--background-color, #faf8f5);
-    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.1);
+    box-shadow: -4px 0 20px var(--shadow-color, rgba(0, 0, 0, 0.1));
     padding: 2rem 1.5rem;
     overflow-y: auto;
     z-index: 1000;

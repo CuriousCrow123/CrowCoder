@@ -256,7 +256,7 @@
     width: 36px;
     height: 36px;
     border-radius: 8px;
-    border: 1px solid rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--border-color, rgba(0, 0, 0, 0.1));
   }
 
   .color-details {
@@ -267,13 +267,13 @@
   .color-name {
     font-weight: 600;
     font-size: 15px;
-    color: #1a1a1a;
+    color: var(--text-color, #1a1a1a);
   }
 
   .color-value {
     font-family: var(--font-mono);
     font-size: 13px;
-    color: #6b7280;
+    color: var(--text-muted, #6b7280);
   }
 
   @media (prefers-reduced-motion: reduce) {

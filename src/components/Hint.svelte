@@ -18,8 +18,8 @@
 
 <style>
   .hint-card {
-    background: #f0f4ff;
-    border: 1px solid rgba(99, 102, 241, 0.15);
+    background: var(--hint-bg, #f0f4ff);
+    border: 1px solid var(--hint-border, rgba(99, 102, 241, 0.15));
     border-radius: 10px;
     padding: 1.25rem;
     border-left: 3px solid var(--accent-color, #6366f1);
@@ -39,7 +39,7 @@
     font-family: var(--font-prose);
     font-size: var(--text-quiz-question, 17px);
     line-height: 1.55;
-    color: #1a1a1a;
+    color: var(--text-color, #1a1a1a);
   }
 
   .hint-content :global(p) {

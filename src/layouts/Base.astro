@@ -2,6 +2,7 @@
 import "../styles/global.css";
 import tokens from "../lib/design-tokens.params";
 import DevGlobalPanel from "../components/DevGlobalPanel.astro";
+import ThemeToggle from "../components/ThemeToggle.svelte";
 
 // Build design token CSS custom properties from params file (production path)
 const cssVars = tokens
@@ -39,8 +40,20 @@ const {
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{title}</title>
     <style set:html={`:root { ${cssVars} }`}></style>
+    <!-- Prevent FOUC: apply dark mode class before first paint -->
+    <script is:inline>
+      (function() {
+        var t = localStorage.getItem('crowcoder-theme');
+        if (t === 'dark' || (!t && matchMedia('(prefers-color-scheme: dark)').matches)) {
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
   </head>
   <body>
+    <header class="site-header">
+      <ThemeToggle client:load />
+    </header>
     <slot />
     <DevGlobalPanel />
     <noscript>

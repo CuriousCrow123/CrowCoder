@@ -130,11 +130,11 @@
 
 <style>
   .quiz-card {
-    background: var(--quiz-bg, #fffbf0);
-    border: 1px solid rgba(0, 0, 0, 0.08);
+    background: var(--quiz-bg, var(--quiz-card-bg, #fffbf0));
+    border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.08));
     border-radius: var(--quiz-radius, 12px);
     padding: 1.5rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 1px 3px var(--shadow-color, rgba(0, 0, 0, 0.04));
   }
 
   .quiz-question {
@@ -170,7 +170,7 @@
     align-items: center;
     gap: 0.5rem;
     padding: 0.625rem 0.75rem;
-    border: 1px solid rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--border-color, rgba(0, 0, 0, 0.1));
     border-radius: 8px;
     cursor: pointer;
     font-family: var(--font-ui);
@@ -181,12 +181,12 @@
 
   .quiz-answer:hover {
     border-color: var(--accent-color, #6366f1);
-    background-color: rgba(99, 102, 241, 0.04);
+    background-color: color-mix(in srgb, var(--accent-color) 4%, transparent);
   }
 
   .quiz-answer.selected {
     border-color: var(--accent-color, #6366f1);
-    background-color: rgba(99, 102, 241, 0.08);
+    background-color: color-mix(in srgb, var(--accent-color) 8%, transparent);
   }
 
   .quiz-answer input[type="radio"] {
@@ -241,14 +241,14 @@
   }
 
   .correct-answer {
-    background: color-mix(in srgb, var(--quiz-correct, #16a34a) 10%, transparent);
-    color: var(--quiz-correct, #16a34a);
+    background: color-mix(in srgb, var(--quiz-correct, var(--success-color, #16a34a)) 12%, transparent);
+    color: var(--quiz-correct, var(--success-color, #16a34a));
     font-weight: 600;
   }
 
   .wrong-answer {
-    background: color-mix(in srgb, var(--quiz-incorrect, #dc2626) 10%, transparent);
-    color: var(--quiz-incorrect, #dc2626);
+    background: color-mix(in srgb, var(--quiz-incorrect, var(--error-color, #dc2626)) 12%, transparent);
+    color: var(--quiz-incorrect, var(--error-color, #dc2626));
     text-decoration: line-through;
   }
 

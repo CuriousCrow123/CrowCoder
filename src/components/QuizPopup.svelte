@@ -161,7 +161,7 @@
   }
 
   .action-btn:hover {
-    background: rgba(99, 102, 241, 0.06);
+    background: color-mix(in srgb, var(--accent-color) 6%, transparent);
   }
 
   .action-btn:focus-visible {

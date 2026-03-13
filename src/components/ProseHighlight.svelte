@@ -86,14 +86,14 @@
   }
 
   .prose-highlight.active {
-    background-color: var(--active-bg, #eef2ff);
+    background-color: var(--active-bg, color-mix(in srgb, var(--accent-color) 12%, transparent));
     text-decoration-color: var(--pulse-color, #6366f1);
     animation: pulse var(--pulse-duration, 600ms) ease-out;
   }
 
   @keyframes pulse {
     0% { background-color: color-mix(in srgb, var(--pulse-color, #6366f1) 25%, transparent); }
-    100% { background-color: var(--active-bg, #eef2ff); }
+    100% { background-color: var(--active-bg, color-mix(in srgb, var(--accent-color) 12%, transparent)); }
   }
 
   @media (prefers-reduced-motion: reduce) {
