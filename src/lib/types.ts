@@ -39,6 +39,7 @@ export const CardDataSchema = z.object({
   dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}T/),
   lastAnswer: z.literal([0, 1, 2, 3, 4, 5]),
   lastReviewed: z.string().regex(/^\d{4}-\d{2}-\d{2}T/),
+  lastSelectedIndex: z.number().int().min(0).optional(),
 });
 
 export type CardData = z.infer<typeof CardDataSchema>;

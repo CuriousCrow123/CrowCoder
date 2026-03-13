@@ -99,7 +99,7 @@
   {@const size = overrides ? (overrides['wheelSize'] as number ?? p('wheelSize', 'number')) : p('wheelSize', 'number')}
   {@const handle = overrides ? (overrides['handleRadius'] as number ?? p('handleRadius', 'number')) : p('handleRadius', 'number')}
   {@const ring = overrides ? (overrides['ringWidth'] as number ?? p('ringWidth', 'number')) : p('ringWidth', 'number')}
-  {@const highlightColor = overrides ? (overrides['highlightRing'] as string ?? p('highlightRing', 'color')) : p('highlightRing', 'color')}
+  {@const highlightColor = overrides?.['highlightRing'] != null ? String(overrides['highlightRing']) : undefined}
   {@const pos = handlePosition(hue, size, ring)}
 
   <div
@@ -226,8 +226,8 @@
   }
 
   .color-picker.highlighted {
-    border-color: var(--highlight-ring, #6366f1);
-    box-shadow: 0 0 0 4px color-mix(in srgb, var(--highlight-ring, #6366f1) 15%, transparent);
+    border-color: var(--highlight-ring, var(--accent-color, #6366f1));
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--highlight-ring, var(--accent-color, #6366f1)) 15%, transparent);
   }
 
   svg {
@@ -256,7 +256,7 @@
     width: 36px;
     height: 36px;
     border-radius: 8px;
-    border: 1px solid rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--border-color, rgba(0, 0, 0, 0.1));
   }
 
   .color-details {
@@ -267,13 +267,13 @@
   .color-name {
     font-weight: 600;
     font-size: 15px;
-    color: #1a1a1a;
+    color: var(--text-color, #1a1a1a);
   }
 
   .color-value {
     font-family: var(--font-mono);
     font-size: 13px;
-    color: #6b7280;
+    color: var(--text-muted, #6b7280);
   }
 
   @media (prefers-reduced-motion: reduce) {
