@@ -45,6 +45,22 @@
     confirmImport = null;
   }
 
+  let confirmReset = $state(false);
+
+  function handleReset() {
+    confirmReset = true;
+  }
+
+  function confirmResetProgress() {
+    importProgress({ schemaVersion: 1, cards: {} });
+    confirmReset = false;
+    window.location.reload();
+  }
+
+  function cancelReset() {
+    confirmReset = false;
+  }
+
   let cardCount = $derived(Object.keys(progressState.cards).length);
 </script>
 
@@ -62,6 +78,9 @@
     <button class="action-btn" onclick={handleFileSelect}>
       Import Progress
     </button>
+    <button class="action-btn action-btn--danger" onclick={handleReset} disabled={cardCount === 0}>
+      Reset Progress
+    </button>
     <input
       bind:this={fileInput}
       type="file"
@@ -73,6 +92,16 @@
   </div>
 
   <p class="card-count">{cardCount} {cardCount === 1 ? 'card' : 'cards'} tracked</p>
+
+  {#if confirmReset}
+    <div class="confirm-dialog" role="alertdialog" aria-label="Confirm reset">
+      <p>Clear all progress? This cannot be undone.</p>
+      <div class="confirm-actions">
+        <button class="action-btn action-btn--danger" onclick={confirmResetProgress}>Reset</button>
+        <button class="action-btn" onclick={cancelReset}>Cancel</button>
+      </div>
+    </div>
+  {/if}
 
   {#if confirmImport}
     <div class="confirm-dialog" role="alertdialog" aria-label="Confirm import">
