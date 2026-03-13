@@ -69,7 +69,11 @@ if (typeof window !== "undefined") {
  *   correct → quality 5 (perfect recall)
  *   incorrect → quality 1 (wrong, but remembered upon seeing answer)
  */
-export function recordAnswer(questionId: string, correct: boolean): void {
+export function recordAnswer(
+  questionId: string,
+  correct: boolean,
+  selectedIndex: number,
+): void {
   const quality: SM2Quality = correct ? 5 : 1;
   const now = toISODateString(new Date());
 
@@ -95,6 +99,7 @@ export function recordAnswer(questionId: string, correct: boolean): void {
     dueDate: toISODateString(dueDate),
     lastAnswer: quality,
     lastReviewed: now,
+    lastSelectedIndex: selectedIndex,
   };
 }
 
@@ -125,6 +130,15 @@ export function getDueQuestions(limit = 7): string[] {
  */
 export function hasBeenAnswered(questionId: string): boolean {
   return questionId in progressState.cards;
+}
+
+/**
+ * Get the last selected answer index for a question, if any.
+ */
+export function getLastSelectedIndex(
+  questionId: string,
+): number | undefined {
+  return progressState.cards[questionId]?.lastSelectedIndex;
 }
 
 /**

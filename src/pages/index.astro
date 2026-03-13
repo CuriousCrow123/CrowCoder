@@ -4,10 +4,11 @@ import ProseHighlight from "../components/ProseHighlight.svelte";
 import ProseReactive from "../components/ProseReactive.svelte";
 import ColorPicker from "../components/ColorPicker.svelte";
 import Popup from "../components/Popup.svelte";
-import Quiz from "../components/Quiz.svelte";
+import QuizPopup from "../components/QuizPopup.svelte";
 import Hint from "../components/Hint.svelte";
 import ProgressBar from "../components/ProgressBar.svelte";
 import ExportImport from "../components/ExportImport.svelte";
+import ReviewBanner from "../components/ReviewBanner.svelte";
 
 const quizIds = [
   "color-primary",
@@ -18,9 +19,10 @@ const quizIds = [
 ---
 
 <Base title="Color Theory — CrowCoder">
-  <main class="prose-column" style="padding-block: 3rem;">
+  <main id="main-content" class="prose-column" style="padding-block: 3rem;">
     <h1>Understanding Color Theory</h1>
 
+    <ReviewBanner client:load />
     <ProgressBar client:load quizIds={quizIds} />
 
     <p>
@@ -38,14 +40,13 @@ const quizIds = [
     </p>
 
     <div id="quiz-color-primary">
-      <Popup client:visible id="color-primary" trigger="scroll" mode="inline">
-        <Quiz
-          id="color-primary"
-          question="Which of these is NOT a primary color in the traditional color model?"
-          answers={["Red", "Green", "Blue", "Yellow"]}
-          correctIndex={1}
-        />
-      </Popup>
+      <QuizPopup
+        client:visible
+        id="color-primary"
+        question="Which of these is NOT a primary color in the traditional color model?"
+        answers={["Red", "Green", "Blue", "Yellow"]}
+        correctIndex={1}
+      />
     </div>
 
     <h2>The Color Wheel</h2>
@@ -69,14 +70,13 @@ const quizIds = [
     </p>
 
     <div id="quiz-color-secondary">
-      <Popup client:visible id="color-secondary" trigger="scroll" mode="inline">
-        <Quiz
-          id="color-secondary"
-          question="What do you get when you mix red and yellow?"
-          answers={["Green", "Purple", "Orange", "Brown"]}
-          correctIndex={2}
-        />
-      </Popup>
+      <QuizPopup
+        client:visible
+        id="color-secondary"
+        question="What do you get when you mix red and yellow?"
+        answers={["Green", "Purple", "Orange", "Brown"]}
+        correctIndex={2}
+      />
     </div>
 
     <h2>Color Harmony</h2>
@@ -101,14 +101,14 @@ const quizIds = [
     </Popup>
 
     <div id="quiz-color-complementary">
-      <Popup client:visible id="color-complementary" trigger="scroll" mode="inline">
-        <Quiz
-          id="color-complementary"
-          question="What is the complementary color of blue?"
-          answers={["Red", "Green", "Orange", "Yellow"]}
-          correctIndex={2}
-        />
-      </Popup>
+      <QuizPopup
+        client:visible
+        id="color-complementary"
+        question="What is the complementary color of blue?"
+        answers={["Red", "Green", "Orange", "Yellow"]}
+        correctIndex={2}
+        mode="modal"
+      />
     </div>
 
     <h2>Warm vs. Cool Colors</h2>
@@ -119,15 +119,25 @@ const quizIds = [
       this distinction is key to creating mood and depth in design.
     </p>
 
+    <Popup client:visible id="warm-cool-hint" trigger="manual" mode="slide-in">
+      <Hint title="Color temperature">
+        <p>
+          Artists use warm and cool colors strategically. Warm foreground
+          colors make objects "pop," while cool background colors create
+          depth. This is why distant mountains look blue — atmospheric
+          perspective shifts colors toward the cool end of the spectrum.
+        </p>
+      </Hint>
+    </Popup>
+
     <div id="quiz-color-warm-cool">
-      <Popup client:visible id="color-warm-cool" trigger="scroll" mode="inline">
-        <Quiz
-          id="color-warm-cool"
-          question="Which color is considered a 'warm' color?"
-          answers={["Blue", "Purple", "Green", "Orange"]}
-          correctIndex={3}
-        />
-      </Popup>
+      <QuizPopup
+        client:visible
+        id="color-warm-cool"
+        question="Which color is considered a 'warm' color?"
+        answers={["Blue", "Purple", "Green", "Orange"]}
+        correctIndex={3}
+      />
     </div>
 
     <p>
@@ -136,6 +146,16 @@ const quizIds = [
       throughout this page to see how prose and components communicate
       bidirectionally — the text highlights the component, and interacting
       with the component highlights related text.
+    </p>
+
+    <h2>Keep Learning</h2>
+    <p>
+      Color theory is a foundation you'll build on throughout your design
+      journey. Review the quizzes above as they become due — spaced
+      repetition helps concepts move from short-term to long-term memory.
+      Use the dark mode toggle in the top-right corner to study in your
+      preferred lighting. Your progress is saved automatically and can be
+      exported below.
     </p>
 
     <h2>Your Progress</h2>
