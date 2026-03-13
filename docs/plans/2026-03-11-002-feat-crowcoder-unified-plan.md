@@ -1129,43 +1129,43 @@ Self-hosted WOFF2 via Fontsource. `font-display: swap` for all three fonts *(cor
 
 ### Functional Requirements
 
-- [ ] Single page renders prose and interactive Svelte components
-- [ ] Prose updates reactively when component state changes
-- [ ] Clicking highlighted prose activates component state
-- [ ] Component interaction highlights linked prose text
-- [ ] Quiz popups appear via scroll, manual, and component-completion triggers
-- [ ] All three popup modes work: inline, modal, slide-in
-- [ ] Quiz answers tracked with SM-2 algorithm
-- [ ] Due review quizzes re-appear inline at original location
-- [ ] Progress persists in localStorage across page reloads
-- [ ] Export/import progress as JSON
-- [ ] Site deploys to GitHub Pages via GitHub Actions
+- [x] Single page renders prose and interactive Svelte components
+- [x] Prose updates reactively when component state changes
+- [x] Clicking highlighted prose activates component state
+- [x] Component interaction highlights linked prose text
+- [x] Quiz popups appear via scroll, manual, and component-completion triggers
+- [x] All three popup modes work: inline, modal, slide-in
+- [x] Quiz answers tracked with SM-2 algorithm
+- [x] Due review quizzes re-appear inline at original location
+- [x] Progress persists in localStorage across page reloads
+- [x] Export/import progress as JSON
+- [x] Site deploys to GitHub Pages via GitHub Actions
 
 ### Tuning System Requirements
 
-- [ ] Each tunable component has a colocated `.params.ts` sidecar file
-- [ ] Per-component gear icon appears in dev mode, opens persistent floating panel
-- [ ] Dragging a slider updates CSS params in real-time (before commit)
-- [ ] JS behavioral params update after commit via HMR cycle
-- [ ] Clicking "commit" writes tuned values back to `.params.ts` on disk
-- [ ] Vite HMR reloads the component after write-back
-- [ ] GlobalParamPanel tunes site-wide design tokens via CSS custom properties
-- [ ] `astro build` produces zero bytes of tuning system code
-- [ ] Write-back endpoint rejects paths outside project root and non-`.params.ts` files
-- [ ] Commit button disabled while write is in-flight
+- [x] Each tunable component has a colocated `.params.ts` sidecar file
+- [x] Per-component gear icon appears in dev mode, opens persistent floating panel
+- [x] Dragging a slider updates CSS params in real-time (before commit)
+- [x] JS behavioral params update after commit via HMR cycle
+- [x] Clicking "commit" writes tuned values back to `.params.ts` on disk
+- [x] Vite HMR reloads the component after write-back
+- [x] GlobalParamPanel tunes site-wide design tokens via CSS custom properties
+- [x] `astro build` produces zero bytes of tuning system code
+- [x] Write-back endpoint rejects paths outside project root and non-`.params.ts` files
+- [x] Commit button disabled while write is in-flight
 
 ### Non-Functional Requirements
 
-- [ ] Page loads with readable prose before JavaScript hydrates
-- [ ] All interactive components are keyboard-navigable
-- [ ] Reactive prose uses `aria-live` for screen reader announcements
-- [ ] Modal popups use native `<dialog>` with `showModal()`
-- [ ] `prefers-reduced-motion` respected
-- [ ] `<noscript>` fallback present
-- [ ] localStorage schema versioned from v1
-- [ ] All untrusted data passes through Zod v4 validation
-- [ ] No `{@html}` or `set:html` with runtime data
-- [ ] Unit tests for SM-2 algorithm and persistence
+- [x] Page loads with readable prose before JavaScript hydrates
+- [x] All interactive components are keyboard-navigable
+- [x] Reactive prose uses `aria-live` for screen reader announcements
+- [x] Modal popups use native `<dialog>` with `showModal()`
+- [x] `prefers-reduced-motion` respected
+- [x] `<noscript>` fallback present
+- [x] localStorage schema versioned from v1
+- [x] All untrusted data passes through Zod v4 validation
+- [x] No `{@html}` or `set:html` with runtime data
+- [x] Unit tests for SM-2 algorithm and persistence
 - [x] Integration test for cross-island state sharing
 
 ## Dependencies & Prerequisites
