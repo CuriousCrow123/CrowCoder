@@ -45,6 +45,22 @@
     confirmImport = null;
   }
 
+  let confirmReset = $state(false);
+
+  function handleReset() {
+    confirmReset = true;
+  }
+
+  function confirmResetProgress() {
+    importProgress({ schemaVersion: 1, cards: {} });
+    confirmReset = false;
+    window.location.reload();
+  }
+
+  function cancelReset() {
+    confirmReset = false;
+  }
+
   let cardCount = $derived(Object.keys(progressState.cards).length);
 </script>
 
@@ -62,6 +78,9 @@
     <button class="action-btn" onclick={handleFileSelect}>
       Import Progress
     </button>
+    <button class="action-btn action-btn--danger" onclick={handleReset} disabled={cardCount === 0}>
+      Reset Progress
+    </button>
     <input
       bind:this={fileInput}
       type="file"
@@ -73,6 +92,16 @@
   </div>
 
   <p class="card-count">{cardCount} {cardCount === 1 ? 'card' : 'cards'} tracked</p>
+
+  {#if confirmReset}
+    <div class="confirm-dialog" role="alertdialog" aria-label="Confirm reset">
+      <p>Clear all progress? This cannot be undone.</p>
+      <div class="confirm-actions">
+        <button class="action-btn action-btn--danger" onclick={confirmResetProgress}>Reset</button>
+        <button class="action-btn" onclick={cancelReset}>Cancel</button>
+      </div>
+    </div>
+  {/if}
 
   {#if confirmImport}
     <div class="confirm-dialog" role="alertdialog" aria-label="Confirm import">
@@ -110,9 +139,10 @@
 
   .action-btn {
     padding: 0.5rem 1rem;
-    border: 1px solid rgba(0, 0, 0, 0.12);
+    border: 1px solid var(--border-color, rgba(0, 0, 0, 0.12));
     border-radius: 6px;
-    background: white;
+    background: var(--surface-color, white);
+    color: var(--text-color, #1a1a1a);
     cursor: pointer;
     font-family: inherit;
     font-size: inherit;
@@ -135,13 +165,13 @@
   }
 
   .action-btn--danger {
-    border-color: #dc2626;
-    color: #dc2626;
+    border-color: var(--error-color, #dc2626);
+    color: var(--error-color, #dc2626);
   }
 
   .action-btn--danger:hover {
-    background: #fef2f2;
-    border-color: #dc2626 !important;
+    background: var(--confirm-bg, #fef2f2);
+    border-color: var(--error-color, #dc2626) !important;
   }
 
   .sr-only {
@@ -156,7 +186,7 @@
   }
 
   .card-count {
-    color: #6b7280;
+    color: var(--text-muted, #6b7280);
     margin-top: 0.5rem;
     margin-bottom: 0;
   }
@@ -164,8 +194,8 @@
   .confirm-dialog {
     margin-top: 0.75rem;
     padding: 1rem;
-    background: #fef2f2;
-    border: 1px solid #fecaca;
+    background: var(--confirm-bg, #fef2f2);
+    border: 1px solid var(--confirm-border, #fecaca);
     border-radius: 8px;
   }
 
@@ -184,15 +214,15 @@
     font-weight: 500;
   }
 
-  .status-success { color: #16a34a; }
-  .status-error { color: #dc2626; }
+  .status-success { color: var(--success-color, #16a34a); }
+  .status-error { color: var(--error-color, #dc2626); }
 
   .storage-warning {
     padding: 0.75rem 1rem;
-    background: #fffbeb;
-    border: 1px solid #fde68a;
+    background: var(--warning-bg, #fffbeb);
+    border: 1px solid var(--warning-border, #fde68a);
     border-radius: 8px;
-    color: #92400e;
+    color: var(--warning-text, #92400e);
     margin-bottom: 0.75rem;
     font-weight: 500;
   }

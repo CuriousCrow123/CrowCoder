@@ -9,7 +9,7 @@
     popupState,
     requestPopup,
     onEntered,
-    dismissCurrent,
+    dismiss,
     onExited,
     resetTrigger,
     wasTriggered,
@@ -41,11 +41,12 @@
 
   let containerEl = $state<HTMLElement | null>(null);
   let dialogEl = $state<HTMLDialogElement | null>(null);
-  let dismissed = $state(false);
+  let popupEl = $state<HTMLElement | null>(null);
 
-  // Is this popup currently displayed?
-  let isActive = $derived(popupState.current?.id === id);
-  let phase = $derived(isActive ? popupState.phase : 'idle');
+  // Per-popup state from the multi-slot map
+  let entry = $derived(popupState.active.get(id));
+  let isActive = $derived(!!entry);
+  let phase = $derived(entry?.phase ?? 'idle');
 
   // Reduced motion preference
   let prefersReducedMotion = $state(false);
@@ -55,8 +56,9 @@
 
   // --- Trigger logic ---
 
-  // Scroll trigger
-  onMount(() => {
+  // Scroll trigger — use $effect so observer re-registers when containerEl
+  // changes (e.g., when TunableComponent loads and recreates the DOM tree).
+  $effect(() => {
     if (trigger !== 'scroll' || !containerEl) return;
     return observeOnce(containerEl, () => {
       requestPopup(id, mode);
@@ -88,19 +90,19 @@
 
     if (phase === 'entering') {
       if (prefersReducedMotion) {
-        onEntered();
+        onEntered(id);
       } else {
         clearTimeout(safetyTimer);
-        safetyTimer = setTimeout(onEntered, p('enterDuration', 'number') + 100);
+        safetyTimer = setTimeout(() => onEntered(id), p('enterDuration', 'number') + 100);
       }
     }
 
     if (phase === 'exiting') {
       if (prefersReducedMotion) {
-        onExited();
+        onExited(id);
       } else {
         clearTimeout(safetyTimer);
-        safetyTimer = setTimeout(onExited, p('exitDuration', 'number') + 100);
+        safetyTimer = setTimeout(() => onExited(id), p('exitDuration', 'number') + 100);
       }
     }
 
@@ -118,15 +120,22 @@
     }
   });
 
+  // Focus management for inline/slide-in: move focus into popup when active
+  $effect(() => {
+    if (mode === 'modal') return; // Modal uses native dialog focus
+    if (phase === 'active' && popupEl) {
+      popupEl.focus();
+    }
+  });
+
   function handleTransitionEnd() {
     clearTimeout(safetyTimer);
-    if (phase === 'entering') onEntered();
-    if (phase === 'exiting') onExited();
+    if (phase === 'entering') onEntered(id);
+    if (phase === 'exiting') onExited(id);
   }
 
   function handleDismiss() {
-    dismissed = true;
-    dismissCurrent();
+    dismiss(id);
     // Allow re-triggering dismissed quizzes (plan: "Dismissed quizzes re-trigger on next page load")
     resetTrigger(id);
   }
@@ -160,8 +169,13 @@
     style:--backdrop-opacity={backdropOp}
     style:--slide-width="{slideW}px"
   >
-    {#if trigger === 'manual' && !isActive}
-      <button class="popup-trigger-btn" onclick={handleManualTrigger}>
+    {#if trigger === 'manual'}
+      <button
+        class="popup-trigger-btn"
+        onclick={handleManualTrigger}
+        aria-expanded={isActive}
+        style:display={isActive ? 'none' : undefined}
+      >
         Show hint
       </button>
     {/if}
@@ -169,6 +183,7 @@
     {#if isActive}
       {#if mode === 'inline'}
         <div
+          bind:this={popupEl}
           class="popup popup--inline"
           class:entering={phase === 'entering'}
           class:active={phase === 'active'}
@@ -176,7 +191,8 @@
           ontransitionend={handleTransitionEnd}
           onkeydown={handleKeydown}
           role="region"
-          aria-label="Popup content"
+          aria-label="Popup: {id}"
+          tabindex="-1"
         >
           <button class="popup-close" onclick={handleDismiss} aria-label="Close">
             <span aria-hidden="true">×</span>
@@ -205,6 +221,7 @@
 
       {:else if mode === 'slide-in'}
         <div
+          bind:this={popupEl}
           class="popup popup--slide-in"
           class:entering={phase === 'entering'}
           class:active={phase === 'active'}
@@ -212,7 +229,7 @@
           ontransitionend={handleTransitionEnd}
           onkeydown={handleKeydown}
           role="complementary"
-          aria-label="Side panel"
+          aria-label="Side panel: {id}"
           tabindex="-1"
         >
           <button class="popup-close" onclick={handleDismiss} aria-label="Close">
@@ -238,6 +255,7 @@
 <style>
   .popup-container {
     position: relative;
+    min-height: 1px; /* Ensures IntersectionObserver can detect zero-content containers */
   }
 
   /* --- Close button (shared) --- */
@@ -251,18 +269,18 @@
     align-items: center;
     justify-content: center;
     border: none;
-    background: rgba(0, 0, 0, 0.06);
+    background: var(--border-subtle, rgba(0, 0, 0, 0.06));
     border-radius: 50%;
     cursor: pointer;
     font-size: 16px;
-    color: #6b7280;
+    color: var(--text-muted, #6b7280);
     transition: background-color 150ms ease;
     z-index: 1;
   }
 
   .popup-close:hover {
-    background: rgba(0, 0, 0, 0.12);
-    color: #1a1a1a;
+    background: var(--border-color, rgba(0, 0, 0, 0.12));
+    color: var(--text-color, #1a1a1a);
   }
 
   .popup-close:focus-visible {
@@ -283,7 +301,7 @@
   }
 
   .popup-trigger-btn:hover {
-    background: rgba(99, 102, 241, 0.06);
+    background: color-mix(in srgb, var(--accent-color) 6%, transparent);
   }
 
   /* --- Inline mode --- */
@@ -319,6 +337,7 @@
     padding: 0;
     max-width: min(90vw, 520px);
     width: 100%;
+    margin: auto; /* Restore centering stripped by Tailwind Preflight reset */
     background: transparent;
     overflow: visible;
   }
@@ -365,7 +384,7 @@
     width: var(--slide-width, 380px);
     max-width: 90vw;
     background: var(--background-color, #faf8f5);
-    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.1);
+    box-shadow: -4px 0 20px var(--shadow-color, rgba(0, 0, 0, 0.1));
     padding: 2rem 1.5rem;
     overflow-y: auto;
     z-index: 1000;

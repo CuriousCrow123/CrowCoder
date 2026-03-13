@@ -1,10 +1,15 @@
 /**
  * Popup state machine — manages popup lifecycle across Astro islands.
  *
- * State machine phases: idle → entering → active → exiting → idle
- * Queue: max 5 pending popups, "dismiss all" clears queue.
+ * Multi-slot: multiple popups can be active concurrently.
+ * Each popup independently tracks its own phase: idle → entering → active → exiting → idle
  * Trigger deduplication: each popup ID fires at most once per page load.
+ *
+ * SvelteMap values are NOT deeply reactive — phase transitions use
+ * immutable entry replacement via .set(), never in-place mutation.
  */
+
+import { SvelteMap } from "svelte/reactivity";
 
 export type PopupPhase = "idle" | "entering" | "active" | "exiting";
 
@@ -15,87 +20,84 @@ export interface PopupRequest {
   mode: PopupMode;
 }
 
-const MAX_QUEUE_DEPTH = 5;
+export interface PopupEntry {
+  request: PopupRequest;
+  phase: PopupPhase;
+}
 
-/** IDs that have already been triggered this page load (not persisted) */
+const MAX_CONCURRENT = 10;
+
+// Imperative only — NOT reactive, do not wrap in $state or read in $derived
 const triggeredThisSession = new Set<string>();
 
 export const popupState = $state({
-  /** Currently displayed popup, or null */
-  current: null as PopupRequest | null,
-  /** Current animation phase */
-  phase: "idle" as PopupPhase,
-  /** Pending popup requests */
-  queue: [] as PopupRequest[],
+  /** All currently active popups, keyed by ID */
+  active: new SvelteMap<string, PopupEntry>(),
 });
 
 /**
- * Request a popup to open. Respects trigger deduplication and queue limits.
- * Returns true if the request was accepted (either displayed or queued).
+ * Request a popup to open. Respects trigger deduplication.
+ * Returns true if the request was accepted and the popup is now entering.
  */
 export function requestPopup(id: string, mode: PopupMode): boolean {
   // Already triggered this session
   if (triggeredThisSession.has(id)) return false;
-  triggeredThisSession.add(id);
 
-  const request: PopupRequest = { id, mode };
+  // Already in the active map (e.g., still in exit animation)
+  if (popupState.active.has(id)) return false;
 
-  // If idle, show immediately
-  if (popupState.phase === "idle" && !popupState.current) {
-    popupState.current = request;
-    popupState.phase = "entering";
-    return true;
+  // Defensive guard against runaway popup creation
+  if (popupState.active.size >= MAX_CONCURRENT) {
+    console.warn(
+      `[popup] MAX_CONCURRENT (${MAX_CONCURRENT}) reached, rejecting popup "${id}"`,
+    );
+    return false;
   }
 
-  // Otherwise queue (if not full)
-  if (popupState.queue.length >= MAX_QUEUE_DEPTH) return false;
-  popupState.queue = [...popupState.queue, request];
+  triggeredThisSession.add(id);
+
+  popupState.active.set(id, {
+    request: { id, mode },
+    phase: "entering",
+  });
   return true;
 }
 
 /**
  * Signal that the enter animation has finished.
  */
-export function onEntered(): void {
-  if (popupState.phase === "entering") {
-    popupState.phase = "active";
-  }
+export function onEntered(id: string): void {
+  const entry = popupState.active.get(id);
+  if (!entry || entry.phase !== "entering") return;
+  popupState.active.set(id, { ...entry, phase: "active" });
 }
 
 /**
- * Begin closing the current popup.
+ * Begin closing a specific popup.
  */
-export function dismissCurrent(): void {
-  if (popupState.phase === "active" || popupState.phase === "entering") {
-    popupState.phase = "exiting";
-  }
+export function dismiss(id: string): void {
+  const entry = popupState.active.get(id);
+  if (!entry || entry.phase === "exiting") return;
+  popupState.active.set(id, { ...entry, phase: "exiting" });
 }
 
 /**
- * Signal that the exit animation has finished. Advances to next queued popup.
+ * Signal that the exit animation has finished. Removes popup from active map.
  */
-export function onExited(): void {
-  if (popupState.phase !== "exiting") return;
-
-  popupState.current = null;
-  popupState.phase = "idle";
-
-  // Advance queue
-  if (popupState.queue.length > 0) {
-    const [next, ...rest] = popupState.queue;
-    popupState.queue = rest;
-    popupState.current = next;
-    popupState.phase = "entering";
-  }
+export function onExited(id: string): void {
+  const entry = popupState.active.get(id);
+  if (!entry || entry.phase !== "exiting") return;
+  popupState.active.delete(id);
 }
 
 /**
- * Dismiss current popup and clear entire queue.
+ * Dismiss all active popups.
  */
 export function dismissAll(): void {
-  popupState.queue = [];
-  if (popupState.current) {
-    popupState.phase = "exiting";
+  for (const [id, entry] of popupState.active) {
+    if (entry.phase !== "exiting") {
+      popupState.active.set(id, { ...entry, phase: "exiting" });
+    }
   }
 }
 
@@ -104,6 +106,14 @@ export function dismissAll(): void {
  */
 export function wasTriggered(id: string): boolean {
   return triggeredThisSession.has(id);
+}
+
+/**
+ * Mark a popup as triggered without opening it.
+ * Used to suppress scroll triggers for already-answered quizzes.
+ */
+export function markTriggered(id: string): void {
+  triggeredThisSession.add(id);
 }
 
 /**

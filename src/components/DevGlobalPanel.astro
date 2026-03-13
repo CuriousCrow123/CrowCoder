@@ -1,8 +1,18 @@
 ---
-// Dev-only wrapper: renders GlobalParamPanel only in dev mode.
-// Astro needs a static import for renderer resolution — the DEV gate
-// ensures this entire file is tree-shaken from production builds.
-import GlobalParamPanel from '../lib/dev/GlobalParamPanel.svelte';
+// Dev-only wrapper: mounts GlobalParamPanel via Svelte's mount() API.
+// Bypasses Astro's hydration directives (which can't resolve dynamic imports)
+// while keeping the component out of production bundles via DEV gate.
 ---
 
-{import.meta.env.DEV && <GlobalParamPanel client:idle />}
+<div id="dev-global-panel"></div>
+
+<script>
+  if (import.meta.env.DEV) {
+    const { default: GlobalParamPanel } = await import('../lib/dev/GlobalParamPanel.svelte');
+    const { mount } = await import('svelte');
+    const target = document.getElementById('dev-global-panel');
+    if (target) {
+      mount(GlobalParamPanel, { target });
+    }
+  }
+</script>
