@@ -1,7 +1,7 @@
 ---
 title: "feat: CrowCoder Unified Plan — Interactive Learning Website + Dev-Time Design Tuning"
 type: feat
-status: active
+status: completed
 date: 2026-03-11
 origin: docs/brainstorms/2026-03-11-plan-integration-brainstorm.md
 supersedes:
@@ -1089,17 +1089,17 @@ Self-hosted WOFF2 via Fontsource. `font-display: swap` for all three fonts *(cor
 **Goal:** Visual polish, final accessibility pass, deploy.
 
 **Tasks:**
-- [ ] Add connection-line SVG affordance between ProseHighlight and linked component
-- [ ] Add text crossfade transitions on ProseReactive updates
-- [ ] Add CSS skeleton placeholders shaped to each component type
-- [ ] Add `<noscript>` fallback message
-- [ ] Final accessibility audit (focus management, ARIA, keyboard navigation across all popup modes)
-- [ ] Add dark mode as first-class theme
-- [ ] Add non-blocking review banner on return visits
-- [ ] Create complete sample lesson demonstrating all features
-- [ ] ~~Integration test: two islands sharing state across mixed hydration directives~~ *(moved to Phase 1)*
-- [ ] Deploy to GitHub Pages and verify end-to-end
-- [ ] Post-build production safety verification in CI
+- [ ] Add connection-line SVG affordance between ProseHighlight and linked component *(deferred — no specific design yet)*
+- [x] Add text crossfade transitions on ProseReactive updates
+- [x] Add CSS skeleton placeholders shaped to each component type
+- [x] Add `<noscript>` fallback message *(already in Phase 1)*
+- [x] Final accessibility audit (focus management, ARIA, keyboard navigation across all popup modes)
+- [x] Add dark mode as first-class theme
+- [x] Add non-blocking review banner on return visits
+- [x] Create complete sample lesson demonstrating all features
+- [x] ~~Integration test: two islands sharing state across mixed hydration directives~~ *(moved to Phase 1)*
+- [x] Deploy to GitHub Pages and verify end-to-end
+- [x] Post-build production safety verification in CI *(already in Phase 1)*
 
 **Success criteria:** Fully functional learning page, accessible, visually polished, dark mode, deployed.
 

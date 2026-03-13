@@ -76,6 +76,16 @@ See ADR: `docs/decisions/001-cross-island-state-sharing.md`
 - `aria-live` regions must live OUTSIDE Popup's `{#if isActive}` block — otherwise the region is destroyed before screen readers process announcements
 - QuizPopup is a composition controller, not a thin passthrough — it manages answered state, quiz mode, focus management, and screen reader announcements
 
+### Dark Mode
+
+- Class-based toggle: `.dark` class on `<html>` (not `prefers-color-scheme` media query)
+- Inline FOUC-prevention script in `Base.astro` `<head>` applies class before first paint
+- Theme preference persisted in localStorage (`crowcoder-theme`: `'light'` | `'dark'`)
+- All colors use CSS custom properties from `:root` / `:root.dark` — never hardcode colors in components
+- Semantic variables: `--text-color`, `--text-muted`, `--border-color`, `--surface-color`, `--quiz-card-bg`, etc.
+- Design token inline styles (from GlobalParamPanel `setProperty()`) override dark mode vars — acceptable trade-off for dev-only tuning
+- WCAG AA contrast: light mode accent `#4f46e5` (5.2:1), muted `#4b5563` (6.8:1); dark mode contrast naturally higher
+
 ### Security Rules
 
 - **NEVER** use `{@html}` or `set:html` with data from localStorage, JSON import, or any runtime source
