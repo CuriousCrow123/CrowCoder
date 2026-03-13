@@ -7,7 +7,7 @@ import { z } from "zod";
  * Each entry maps a component type to its value shape.
  */
 export interface ComponentValueRegistry {
-  colorPicker: { hue: number; name: string };
+  // Add new component types here as they are built
 }
 
 /** Composite key for component values: "type:instanceId" */

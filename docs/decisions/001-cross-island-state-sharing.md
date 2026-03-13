@@ -6,7 +6,7 @@ Accepted (2026-03-12)
 
 ## Context
 
-CrowCoder is a single-page interactive learning site built with Astro + Svelte 5. Multiple Svelte "islands" on the same page need to share reactive state — for example, a `ProseHighlight` island writes to `lessonState.activeHighlight`, and a `ColorPicker` island reads it to respond visually.
+CrowCoder is a single-page interactive learning site built with Astro + Svelte 5. Multiple Svelte "islands" on the same page need to share reactive state — for example, a `ProseHighlight` island writes to `lessonState.activeHighlight`, and an interactive component island reads it to respond visually.
 
 Astro's official recommendation for cross-island state is **Nano Stores** (framework-agnostic). We evaluated three options:
 

@@ -113,7 +113,7 @@ See ADR: `docs/decisions/001-cross-island-state-sharing.md`
 ```
 src/
   layouts/Base.astro
-  pages/index.astro
+  pages/index.astro              # Landing page (placeholder)
   components/           # Svelte islands + .params.ts sidecars
   lib/
     state/              # .svelte.ts shared state modules

@@ -5,18 +5,12 @@
  * shared across all importers — the foundation for cross-island communication.
  */
 import { describe, it, expect, beforeEach } from "vitest";
-import {
-  lessonState,
-  setHighlight,
-  getComponentValue,
-  setComponentValue,
-} from "./lesson.svelte";
+import { lessonState, setHighlight } from "./lesson.svelte";
 
 describe("lesson state singleton", () => {
   beforeEach(() => {
     // Reset state between tests
     lessonState.activeHighlight = null;
-    lessonState.componentValues = {};
   });
 
   describe("highlight sharing", () => {
@@ -49,69 +43,4 @@ describe("lesson state singleton", () => {
     });
   });
 
-  describe("component values", () => {
-    it("setComponentValue stores typed values", () => {
-      setComponentValue("colorPicker", "main", { hue: 180, name: "Teal" });
-      expect(lessonState.componentValues["colorPicker:main"]).toEqual({
-        hue: 180,
-        name: "Teal",
-      });
-    });
-
-    it("getComponentValue retrieves typed values", () => {
-      setComponentValue("colorPicker", "volume", { hue: 75, name: "Spring Green" });
-      const value = getComponentValue("colorPicker", "volume");
-      expect(value).toEqual({ hue: 75, name: "Spring Green" });
-    });
-
-    it("getComponentValue returns undefined for missing keys", () => {
-      const value = getComponentValue("colorPicker", "nonexistent");
-      expect(value).toBeUndefined();
-    });
-
-    it("multiple components coexist without interference", () => {
-      setComponentValue("colorPicker", "a", { hue: 0, name: "Red" });
-      setComponentValue("colorPicker", "b", { hue: 120, name: "Green" });
-
-      expect(getComponentValue("colorPicker", "a")).toEqual({
-        hue: 0,
-        name: "Red",
-      });
-      expect(getComponentValue("colorPicker", "b")).toEqual({
-        hue: 120,
-        name: "Green",
-      });
-    });
-
-    it("overwriting a component value replaces it entirely", () => {
-      setComponentValue("colorPicker", "main", { hue: 0, name: "Red" });
-      setComponentValue("colorPicker", "main", { hue: 240, name: "Blue" });
-      expect(getComponentValue("colorPicker", "main")).toEqual({
-        hue: 240,
-        name: "Blue",
-      });
-    });
-  });
-
-  describe("cross-island interaction pattern", () => {
-    it("simulates ProseHighlight + ColorPicker interaction", () => {
-      // ColorPicker sets its value and highlights related prose
-      setComponentValue("colorPicker", "main", { hue: 270, name: "Purple" });
-      setHighlight("color-main");
-
-      // ProseHighlight reads the shared highlight state
-      expect(lessonState.activeHighlight).toBe("color-main");
-
-      // Both components see the same color value
-      const color = getComponentValue("colorPicker", "main");
-      expect(color?.name).toBe("Purple");
-
-      // User clicks ProseHighlight to deactivate
-      setHighlight(null);
-      expect(lessonState.activeHighlight).toBeNull();
-
-      // Component value persists after highlight cleared
-      expect(getComponentValue("colorPicker", "main")?.hue).toBe(270);
-    });
-  });
 });
