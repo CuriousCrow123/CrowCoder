@@ -2,7 +2,7 @@
   import params from './Quiz.params';
   import { createParamAccessor } from '../lib/dev/param-types';
   import { tunablePromise, type TunableType } from '../lib/dev/lazy';
-  import { hasBeenAnswered, recordAnswer } from '../lib/state/progress.svelte';
+  import { recordAnswer } from '../lib/state/progress.svelte';
 
   let TunableComponent = $state<TunableType | null>(null);
   $effect(() => {
@@ -16,76 +16,41 @@
     question,
     answers,
     correctIndex,
+    reviewMode = false,
+    reviewSelectedIndex,
     onresult,
+    onreset,
   }: {
     id: string;
     question: string;
     answers: string[];
     correctIndex: number;
+    reviewMode?: boolean;
+    reviewSelectedIndex?: number;
     onresult?: (result: { questionId: string; correct: boolean }) => void;
+    onreset?: () => void;
   } = $props();
 
   const p = createParamAccessor(params);
 
-  type QuizMode = 'first-encounter' | 'review';
-  type QuizPhase = 'answering' | 'feedback';
-
-  let isReview = $derived(hasBeenAnswered(id));
-  let mode: QuizMode = $derived(isReview ? 'review' : 'first-encounter');
-
   let selectedIndex = $state<number | null>(null);
-  let phase = $state<QuizPhase>('answering');
-  let wasCorrect = $state<boolean | null>(null);
+  let submitting = $state(false);
 
-  // Auto-collapse timer for correct answers
-  let collapseTimer: ReturnType<typeof setTimeout> | undefined;
+  // Reset answering state when switching from review back to answering
+  $effect(() => {
+    if (!reviewMode) {
+      selectedIndex = null;
+      submitting = false;
+    }
+  });
 
   function submitAnswer() {
-    if (selectedIndex === null) return;
+    if (selectedIndex === null || submitting) return;
+    submitting = true;
     const correct = selectedIndex === correctIndex;
-    wasCorrect = correct;
-    phase = 'feedback';
-
-    recordAnswer(id, correct);
+    recordAnswer(id, correct, selectedIndex);
     onresult?.({ questionId: id, correct });
-
-    // Auto-collapse on correct after feedbackDuration
-    if (correct) {
-      clearTimeout(collapseTimer);
-      collapseTimer = setTimeout(() => {
-        dismiss();
-      }, p('feedbackDuration', 'number'));
-    }
   }
-
-  function handleReview(remembered: boolean) {
-    wasCorrect = remembered;
-    phase = 'feedback';
-
-    recordAnswer(id, remembered);
-    onresult?.({ questionId: id, correct: remembered });
-
-    if (remembered) {
-      clearTimeout(collapseTimer);
-      collapseTimer = setTimeout(() => {
-        dismiss();
-      }, p('feedbackDuration', 'number'));
-    }
-  }
-
-  function dismiss() {
-    clearTimeout(collapseTimer);
-    phase = 'answering';
-    selectedIndex = null;
-    wasCorrect = null;
-    // Signal parent popup to close
-    onresult?.({ questionId: id, correct: wasCorrect ?? false });
-  }
-
-  // Cleanup timer on destroy
-  $effect(() => {
-    return () => clearTimeout(collapseTimer);
-  });
 </script>
 
 {#snippet quizContent(overrides?: Record<string, number | string | boolean>)}
@@ -105,88 +70,50 @@
   >
     <p class="quiz-question">{question}</p>
 
-    {#if mode === 'first-encounter'}
-      {#if phase === 'answering'}
-        <fieldset class="quiz-answers">
-          <legend class="sr-only">Select your answer</legend>
-          {#each answers as answer, i}
-            <label class="quiz-answer" class:selected={selectedIndex === i}>
-              <input
-                type="radio"
-                name="quiz-{id}"
-                value={i}
-                checked={selectedIndex === i}
-                onchange={() => selectedIndex = i}
-              />
-              <span class="quiz-answer-text">{answer}</span>
-            </label>
-          {/each}
-        </fieldset>
-        <button
-          class="quiz-submit"
-          disabled={selectedIndex === null}
-          onclick={submitAnswer}
-        >
-          Submit
-        </button>
-      {:else}
-        <!-- Feedback phase -->
-        <div class="quiz-feedback" aria-live="polite">
-          {#if wasCorrect}
-            <p class="feedback-text feedback-correct">Correct!</p>
-          {:else}
-            <p class="feedback-text feedback-incorrect">
-              Not quite — the answer is <strong>{answers[correctIndex]}</strong>.
-            </p>
-          {/if}
-          <div class="quiz-answers-review">
-            {#each answers as answer, i}
-              <div
-                class="quiz-answer-result"
-                class:correct-answer={i === correctIndex}
-                class:wrong-answer={i === selectedIndex && i !== correctIndex}
-              >
-                <span class="quiz-answer-text">{answer}</span>
-                {#if i === correctIndex}
-                  <span class="answer-icon" aria-hidden="true">✓</span>
-                {:else if i === selectedIndex}
-                  <span class="answer-icon" aria-hidden="true">✗</span>
-                {/if}
-              </div>
-            {/each}
+    {#if reviewMode}
+      {@const safeReviewIndex = reviewSelectedIndex != null && reviewSelectedIndex < answers.length
+        ? reviewSelectedIndex : undefined}
+      <div class="quiz-answers-review">
+        {#each answers as answer, i}
+          <div
+            class="quiz-answer-result"
+            class:correct-answer={i === correctIndex}
+            class:wrong-answer={i === safeReviewIndex && i !== correctIndex}
+          >
+            <span class="quiz-answer-text">{answer}</span>
+            {#if i === correctIndex}
+              <span class="answer-icon" aria-hidden="true">&#10003;</span>
+              <span class="sr-only">Correct answer</span>
+            {:else if i === safeReviewIndex}
+              <span class="answer-icon" aria-hidden="true">&#10007;</span>
+              <span class="sr-only">Your answer (incorrect)</span>
+            {/if}
           </div>
-          {#if !wasCorrect}
-            <button class="quiz-submit" onclick={dismiss}>Got it</button>
-          {:else}
-            <button class="quiz-submit quiz-submit--subtle" onclick={dismiss}>Continue</button>
-          {/if}
-        </div>
-      {/if}
-
+        {/each}
+      </div>
+      <button class="quiz-submit" onclick={onreset}>Try again</button>
     {:else}
-      <!-- Review mode -->
-      {#if phase === 'answering'}
-        <p class="review-prompt">Do you remember the answer?</p>
-        <div class="review-buttons">
-          <button class="review-btn review-btn--again" onclick={() => handleReview(false)}>
-            Show me again
-          </button>
-          <button class="review-btn review-btn--remember" onclick={() => handleReview(true)}>
-            I remember
-          </button>
-        </div>
-      {:else}
-        <div class="quiz-feedback" aria-live="polite">
-          {#if wasCorrect}
-            <p class="feedback-text feedback-correct">Nice!</p>
-          {:else}
-            <p class="feedback-text feedback-incorrect">
-              The answer is <strong>{answers[correctIndex]}</strong>.
-            </p>
-            <button class="quiz-submit" onclick={dismiss}>Got it</button>
-          {/if}
-        </div>
-      {/if}
+      <fieldset class="quiz-answers">
+        <legend class="sr-only">Select your answer</legend>
+        {#each answers as answer, i}
+          <label class="quiz-answer" class:selected={selectedIndex === i}>
+            <input
+              type="radio"
+              name="quiz-{id}"
+              bind:group={selectedIndex}
+              value={i}
+            />
+            <span class="quiz-answer-text">{answer}</span>
+          </label>
+        {/each}
+      </fieldset>
+      <button
+        class="quiz-submit"
+        disabled={selectedIndex === null}
+        onclick={submitAnswer}
+      >
+        Submit
+      </button>
     {/if}
   </div>
 {/snippet}
@@ -295,22 +222,6 @@
     outline-offset: 2px;
   }
 
-  .quiz-submit--subtle {
-    background: transparent;
-    color: var(--accent-color, #6366f1);
-    border: 1px solid var(--accent-color, #6366f1);
-  }
-
-  .feedback-text {
-    font-family: var(--font-ui);
-    font-size: var(--text-quiz-answer, 16px);
-    font-weight: 600;
-    margin: 0 0 0.75rem;
-  }
-
-  .feedback-correct { color: var(--quiz-correct, #16a34a); }
-  .feedback-incorrect { color: var(--quiz-incorrect, #dc2626); }
-
   .quiz-answers-review {
     display: flex;
     flex-direction: column;
@@ -346,50 +257,8 @@
     font-size: 1.1em;
   }
 
-  .review-prompt {
-    font-family: var(--font-ui);
-    font-size: var(--text-quiz-answer, 16px);
-    color: #6b7280;
-    margin: 0 0 1rem;
-  }
-
-  .review-buttons {
-    display: flex;
-    gap: 0.75rem;
-  }
-
-  .review-btn {
-    flex: 1;
-    padding: 0.625rem 1rem;
-    border-radius: 6px;
-    font-family: var(--font-ui);
-    font-size: var(--text-quiz-answer, 16px);
-    font-weight: 600;
-    cursor: pointer;
-    transition: opacity 150ms ease;
-  }
-
-  .review-btn:hover { opacity: 0.9; }
-
-  .review-btn:focus-visible {
-    outline: 2px solid var(--accent-color, #6366f1);
-    outline-offset: 2px;
-  }
-
-  .review-btn--again {
-    background: transparent;
-    border: 1px solid var(--quiz-incorrect, #dc2626);
-    color: var(--quiz-incorrect, #dc2626);
-  }
-
-  .review-btn--remember {
-    background: var(--quiz-correct, #16a34a);
-    border: 1px solid var(--quiz-correct, #16a34a);
-    color: white;
-  }
-
   @media (prefers-reduced-motion: reduce) {
-    .quiz-answer, .quiz-submit, .review-btn {
+    .quiz-answer, .quiz-submit {
       transition-duration: 0.01ms !important;
     }
   }

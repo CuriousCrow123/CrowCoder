@@ -4,7 +4,7 @@ import ProseHighlight from "../components/ProseHighlight.svelte";
 import ProseReactive from "../components/ProseReactive.svelte";
 import ColorPicker from "../components/ColorPicker.svelte";
 import Popup from "../components/Popup.svelte";
-import Quiz from "../components/Quiz.svelte";
+import QuizPopup from "../components/QuizPopup.svelte";
 import Hint from "../components/Hint.svelte";
 import ProgressBar from "../components/ProgressBar.svelte";
 import ExportImport from "../components/ExportImport.svelte";
@@ -38,14 +38,13 @@ const quizIds = [
     </p>
 
     <div id="quiz-color-primary">
-      <Popup client:visible id="color-primary" trigger="scroll" mode="inline">
-        <Quiz
-          id="color-primary"
-          question="Which of these is NOT a primary color in the traditional color model?"
-          answers={["Red", "Green", "Blue", "Yellow"]}
-          correctIndex={1}
-        />
-      </Popup>
+      <QuizPopup
+        client:visible
+        id="color-primary"
+        question="Which of these is NOT a primary color in the traditional color model?"
+        answers={["Red", "Green", "Blue", "Yellow"]}
+        correctIndex={1}
+      />
     </div>
 
     <h2>The Color Wheel</h2>
@@ -69,14 +68,13 @@ const quizIds = [
     </p>
 
     <div id="quiz-color-secondary">
-      <Popup client:visible id="color-secondary" trigger="scroll" mode="inline">
-        <Quiz
-          id="color-secondary"
-          question="What do you get when you mix red and yellow?"
-          answers={["Green", "Purple", "Orange", "Brown"]}
-          correctIndex={2}
-        />
-      </Popup>
+      <QuizPopup
+        client:visible
+        id="color-secondary"
+        question="What do you get when you mix red and yellow?"
+        answers={["Green", "Purple", "Orange", "Brown"]}
+        correctIndex={2}
+      />
     </div>
 
     <h2>Color Harmony</h2>
@@ -101,14 +99,13 @@ const quizIds = [
     </Popup>
 
     <div id="quiz-color-complementary">
-      <Popup client:visible id="color-complementary" trigger="scroll" mode="inline">
-        <Quiz
-          id="color-complementary"
-          question="What is the complementary color of blue?"
-          answers={["Red", "Green", "Orange", "Yellow"]}
-          correctIndex={2}
-        />
-      </Popup>
+      <QuizPopup
+        client:visible
+        id="color-complementary"
+        question="What is the complementary color of blue?"
+        answers={["Red", "Green", "Orange", "Yellow"]}
+        correctIndex={2}
+      />
     </div>
 
     <h2>Warm vs. Cool Colors</h2>
@@ -120,14 +117,13 @@ const quizIds = [
     </p>
 
     <div id="quiz-color-warm-cool">
-      <Popup client:visible id="color-warm-cool" trigger="scroll" mode="inline">
-        <Quiz
-          id="color-warm-cool"
-          question="Which color is considered a 'warm' color?"
-          answers={["Blue", "Purple", "Green", "Orange"]}
-          correctIndex={3}
-        />
-      </Popup>
+      <QuizPopup
+        client:visible
+        id="color-warm-cool"
+        question="Which color is considered a 'warm' color?"
+        answers={["Blue", "Purple", "Green", "Orange"]}
+        correctIndex={3}
+      />
     </div>
 
     <p>

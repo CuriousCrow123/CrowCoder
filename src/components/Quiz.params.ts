@@ -5,7 +5,6 @@ const params: ParamDef[] = [
   { key: 'cardBg', label: 'Card Background', type: 'color', value: '#fffbf0' },
   { key: 'correctColor', label: 'Correct Answer Color', type: 'color', value: '#16a34a' },
   { key: 'incorrectColor', label: 'Incorrect Answer Color', type: 'color', value: '#dc2626' },
-  { key: 'feedbackDuration', label: 'Feedback Duration', type: 'number', value: 2000, min: 500, max: 5000, step: 250, unit: 'ms', tier: 'js' },
 ];
 
 export default params;
